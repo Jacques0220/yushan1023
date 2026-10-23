@@ -1266,7 +1266,11 @@ function gtNote(m){const c=ctx();if(GTB[m])return GTB[m];const sr=c.sampleRate,f
   for(let i=Di+2;i<L;i++){const a=y[i-Di]*(1-fr)+y[i-Di-1]*fr,b2=y[i-Di-1]*(1-fr)+y[i-Di-2]*fr;y[i]=rho*.5*(a+b2)}
   for(let i=0;i<L;i++)pk=Math.max(pk,Math.abs(y[i]));for(let i=0;i<L;i++)y[i]/=pk||1;return GTB[m]=b}
 function gtPluck(m,when=0,vol=.42){try{const c=ctx(),s=c.createBufferSource(),v=c.createGain(),t=c.currentTime+when;s.buffer=gtNote(m);v.gain.setValueAtTime(vol,t);s.connect(v);v.connect(master);s.start(t);return {s,v}}catch(e){return null}}
-function gtPrep(){gtWas=!bgm.paused;musicHold=true;bgm.pause();ctx();GT.n.forEach(n=>{gtNote(n[2]);if(n[3])gtNote(n[3])})}
+/* guitar.mp3 = 指彈版的第一段副歌（從原曲 19.0 秒剪下來，所以譜上的 0 秒 = 音檔的 0.7 秒）；
+   打中一個音符，就播錄音裡這個音符到下一個音符的那一小段。音檔讀不到才用上面的撥弦聲 */
+const GT_OFF=.7;let gtBuf=null,gtLoad=null,gtFail=false;
+function gtFetch(){if(!gtLoad)gtLoad=fetch('guitar.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(a=>new Promise((ok,no)=>ctx().decodeAudioData(a,ok,no))).then(b=>{gtBuf=b},()=>{gtFail=true})}
+function gtPrep(){gtWas=!bgm.paused;musicHold=true;bgm.pause();ctx();gtFetch();GT.n.forEach(n=>{gtNote(n[2]);if(n[3])gtNote(n[3])})}
 function lvGuitar(box,done){
   const COL=['#d9503a','#3f9a5a','#4a8fd0','#e8ad2e'],TINT=['#f6d3c9','#cfe8d3','#d3e3f3','#f7e7bd'],INK='#3a2a1f',
     FONT="'Iansui','LXGW WenKai TC',cursive",SANS="system-ui,-apple-system,'Segoe UI',sans-serif",
@@ -1362,7 +1366,10 @@ function lvGuitar(box,done){
   function start(){over.hidden=true;mode='play';
     hush();t0=performance.now()/1000-GT.count[0];ci=0}
   /* 打中的音符就撥它的旋律音（底下有低音就一起撥），按下去馬上響 */
-  function play(n){const w=0;if(n.bs){const q=gtPluck(n.bs,w,.3);if(q){live.push(q);q.s.onended=()=>{live=live.filter(z=>z!==q)}}}const o=gtPluck(n.m,w);if(!o)return;n.src=o;live.push(o);o.s.onended=()=>{live=live.filter(q=>q!==o)}}
+  function play(n){if(gtBuf){hush();try{const c=ctx(),i=NOTES.indexOf(n),a=n.t-.03,len=Math.min(2.2,(i+1<N?NOTES[i+1].t-.03:n.t+1.6)-a),t=c.currentTime,s=c.createBufferSource(),v=c.createGain();
+      s.buffer=gtBuf;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(1,t+.006);v.gain.setValueAtTime(1,t+len-.07);v.gain.linearRampToValueAtTime(0,t+len);
+      s.connect(v);v.connect(master);s.start(t,Math.max(0,a+GT_OFF),len+.02);const o={s,v};n.src=o;live.push(o);s.onended=()=>{live=live.filter(q=>q!==o)}}catch(e){}return}
+    const w=0;if(n.bs){const q=gtPluck(n.bs,w,.3);if(q){live.push(q);q.s.onended=()=>{live=live.filter(z=>z!==q)}}}const o=gtPluck(n.m,w);if(!o)return;n.src=o;live.push(o);o.s.onended=()=>{live=live.filter(q=>q!==o)}}
   function fade(o){if(!o)return;try{const t=ctx().currentTime;o.v.gain.cancelScheduledValues(t);o.v.gain.setValueAtTime(o.v.gain.value,t);o.v.gain.linearRampToValueAtTime(0,t+.08);o.s.stop(t+.1)}catch(e){}}
   function hush(){live.forEach(fade);live=[]}
   function ask(t,fn){over.innerHTML=`<div class="rg-res rough"><div class="row" style="margin:0"><button class="btn red" id="rgask">${t}</button></div></div>`;over.hidden=false;
@@ -1372,10 +1379,10 @@ function lvGuitar(box,done){
   const OPEN=[59,64,68,71];
   /* 只是生日小遊戲：沒對到音符就彈離現在最近的那個旋律音，怎麼按都不會走音 */
   const near=now=>{let b=null,bd=1e9;for(const n of NOTES){const d=Math.abs(n.t-now);if(d<bd){bd=d;b=n}}return b};
-  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play'){gtPluck(OPEN[l]);return}
+  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play'){if(!gtBuf)gtPluck(OPEN[l]);return}
     /* 時間差不多就算打中，哪根弦都可以（同一根弦的優先） */
     let b=null,bs=1e9,bd=0;for(const n of NOTES){if(n.t-now>GOOD)break;const d=Math.abs(n.t-now);if(n.st||d>GOOD)continue;const sc=d+(n.l===l?0:.06);if(sc<bs){bs=sc;bd=d;b=n}}
-    if(!b){const q=near(now);gtPluck(q?q.m:OPEN[l],0,.3);return}b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;play(b);
+    if(!b){if(!gtBuf){const q=near(now);gtPluck(q?q.m:OPEN[l],0,.3)}return}b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;play(b);
     fx.push({l,t:performance.now()/1000,ok:1,txt:pf?'PERFECT':'GOOD',c:pf?'#d4573b':'#3f7a67'})}
   function rel(l){const n=held[l];if(!n)return;held[l]=0;if(n.st!==3)return;const now=clock();
     if(now<n.t+n.hd-.2){n.st=4;fade(n.src);fx.push({l,t:performance.now()/1000,txt:'放太早',c:'#a08a6e'})}else{n.st=1;holds++;fx.push({l,t:performance.now()/1000,ok:1,txt:'HOLD!',c:'#d4573b'})}}
@@ -1384,7 +1391,7 @@ function lvGuitar(box,done){
     if(pass){sfx.win();burstEl(cv,50);setTimeout(()=>{if(!dead){release();done()}},2400)}
     else{sfx.bad();$('#rgre',box).onclick=()=>{ctx();sfx.pop();NOTES.forEach(n=>{n.st=0;n.src=null});held=[0,0,0,0];fx=[];combo=best=hits=perfect=holds=0;start()}}}
   function frame(){if(dead)return;raf=requestAnimationFrame(frame);
-    if(mode==='load')start();
+    if(mode==='load'&&(gtBuf||gtFail||performance.now()-lt>8000))start();
     const now=mode==='load'?0:clock();
     if(mode==='play'){
       for(let l=0;l<4;l++){const n=held[l];if(n&&n.st===3){lit[l]=performance.now()/1000+.05;if(now>=n.t+n.hd){held[l]=0;n.st=1;holds++;fx.push({l,t:performance.now()/1000,ok:1,txt:'HOLD!',c:'#d4573b'})}}}
@@ -1397,7 +1404,7 @@ function lvGuitar(box,done){
   const onKey=e=>{const l=KEYS[(e.key||'').toLowerCase()];if(l==null||e.repeat||e.metaKey||e.ctrlKey)return;e.preventDefault();hit(l,e.timeStamp)},onKeyUp=e=>{const l=KEYS[(e.key||'').toLowerCase()];if(l!=null)rel(l)};
   const onVis=()=>{if(!document.hidden||mode!=='play')return;mode='wait';pz=performance.now();hush();ask('▶ 繼續',()=>{t0+=(performance.now()-pz)/1000;mode='play'})};
   wasMusic=gtWas||!bgm.paused;musicHold=true;bgm.pause();
-  addEventListener('keydown',onKey);addEventListener('keyup',onKeyUp);addEventListener('resize',fit);document.addEventListener('visibilitychange',onVis);fit();raf=requestAnimationFrame(frame);
+  addEventListener('keydown',onKey);addEventListener('keyup',onKeyUp);addEventListener('resize',fit);document.addEventListener('visibilitychange',onVis);gtFetch();fit();raf=requestAnimationFrame(frame);
   return()=>{dead=true;cancelAnimationFrame(raf);removeEventListener('keydown',onKey);removeEventListener('keyup',onKeyUp);removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);hush();release()};
 }
 
