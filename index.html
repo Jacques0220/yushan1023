@@ -1173,7 +1173,11 @@ function lvGuitar(box,done){
   function ask(t,fn){over.innerHTML=`<div class="rg-res rough"><div class="row" style="margin:0"><button class="btn red" id="rgask">${t}</button></div></div>`;over.hidden=false;
     $('#rgask',box).onclick=()=>{ctx();over.hidden=true;fn()}}
   function release(){if(!musicHold)return;musicHold=false;if(wasMusic&&!userPaused)bgm.play().catch(()=>{});wasMusic=false}
-  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play')return;
+  /* plucked-string sound (Karplus-Strong), one buffer per string */
+  const PB=[];function pluck(l){try{const c=ctx();if(!PB[l]){const sr=c.sampleRate,f=[196,247,294,392][l],L=Math.floor(sr*1.1),D=Math.round(sr/f),b=c.createBuffer(1,L,sr),y=b.getChannelData(0);
+      for(let i=0;i<L;i++)y[i]=i<D?Math.random()*2-1:.996*(y[i-D]+(i-D-1>=0?y[i-D-1]:0))/2;PB[l]=b}
+    const s=c.createBufferSource(),g=c.createGain();s.buffer=PB[l];g.gain.value=.16;s.connect(g);g.connect(master);s.start()}catch(e){}}
+  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play')return;pluck(l);
     let b=null,bd=GOOD;for(const n of NOTES){if(n.t-now>GOOD)break;if(!n.st&&n.l===l&&Math.abs(n.t-now)<=bd){bd=Math.abs(n.t-now);b=n}}
     if(!b)return;b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;
     fx.push({l,t:performance.now()/1000,ok:1,txt:pf?'PERFECT':'GOOD',c:pf?'#d4573b':'#3f7a67'});if(!useAudio)tone(392*Math.pow(2,l*3/12),.18,'triangle',.1)}
