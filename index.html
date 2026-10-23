@@ -117,6 +117,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .scanbox .st{font-family:var(--hand);font-size:18px;color:var(--ink);min-height:22px;margin-top:4px}
 .clr-ic{display:block;width:72px;height:72px;margin:-4px auto 0;filter:url(#sketch);animation:popIn .5s cubic-bezier(.3,1.6,.5,1) .15s backwards}
 .scanbox.thud{animation:thud .35s ease-out}
+#boot .parcel.knock{animation:thud .4s ease-out}
 @keyframes thud{0%{transform:scale(1)}30%{transform:scale(.97) rotate(-.6deg)}60%{transform:scale(1.01) rotate(.3deg)}100%{transform:none}}
 .bigstamp{display:inline-block;border:4px solid var(--red);color:var(--red);border-radius:10px;padding:2px 22px;font-family:var(--head);font-weight:900;font-size:40px;
   transform:scale(3) rotate(-10deg);opacity:0;margin:10px 0}
@@ -555,7 +556,7 @@ body.lvon .paper *,body.lvon #page *,body.lvon #boot *{animation-play-state:paus
   <p class="hk">FROM MALAYSIA ✈ TO TAIWAN</p>
   <p class="bcap" id="pcap">有一個包裹，是個牛皮紙箱，從馬來西亞寄來。</p>
   <div class="parcel" id="parcel"><svg id="psv" viewBox="0 0 320 250" width="100%" style="display:block;overflow:visible"></svg><div class="ptape" id="ptape" style="left:0;right:0;top:26%;height:18%;background:transparent;border:0;display:block"></div></div>
-  <p class="bhint" id="phint">沿著膠帶，從左往右，把它撕開 →</p>
+  <p class="bhint" id="phint">先點一下包裹（記得開聲音 🔊）</p>
   <div class="bnote" id="pnote"><div class="note">親愛的黃玉珊小姐，你好啊！<br>我把二十片拼圖，藏在前四關裡，<br>一關五片。<br>第五關，把它們拼回來；<br>拼好了，就會有驚喜。</div><div class="row"><button class="btn red" id="goHero">收下 ▶</button></div></div>
   <button class="bskip" id="skipOpen" hidden>拆過了？直接打開 ›</button>
  </div>
@@ -634,7 +635,9 @@ function pola(k,r,w){if(!photoOK[k])return null;const d=document.createElement('
 
 /* ---------- audio ---------- */
 let AC=null,master=null;
-function ctx(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.9;master.connect(AC.destination)}if(AC.state==='suspended')AC.resume();return AC}
+/* iPhone 的靜音鍵會把 Web Audio 的音效關掉（背景音樂不會）：說好這是「播放」，才不會被靜音鍵吃掉 */
+function gtSession(t){try{if(navigator.audioSession)navigator.audioSession.type=t}catch(e){}}
+function ctx(){if(!AC){gtSession('playback');const C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.9;master.connect(AC.destination)}if(AC.state==='suspended')AC.resume();return AC}
 function tone(f,d,type='sine',v=.2,when=0){const c=ctx(),t=c.currentTime+when,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.05)}
 const sfx={thud(){tone(90,.25,'sine',.5);tone(55,.3,'triangle',.4)},pop(){tone(520,.12,'triangle',.25);tone(780,.1,'sine',.15,.05)},ding(){tone(880,.5,'sine',.2);tone(1320,.6,'sine',.12,.08)},
   win(){[523,659,784,1047].forEach((f,i)=>tone(f,.4,'triangle',.2,i*.1))},bad(){tone(180,.18,'sawtooth',.12)},tick(){tone(900,.03,'square',.04)},scan(){for(let i=0;i<8;i++)tone(400+i*120,.1,'sine',.06,i*.14)},
@@ -1496,7 +1499,7 @@ function bdaySong(){if(bdayOn)return;bdayOn=true;const c=ctx();bdayG=c.createGai
   (function play(){if(!bdayOn)return;let t=c.currentTime+.15;const t0=t;N.forEach(([f,d])=>{box(f,t,.14);t+=d*B});bdayT=setTimeout(play,(t-t0)*1000+1800)})()}
 function bdayStop(){if(!bdayOn)return;bdayOn=false;clearTimeout(bdayT);try{const c=ctx();bdayG.gain.setTargetAtTime(0,c.currentTime,.25)}catch(e){}}
 let camStream=null,micStream=null,camRaf=null,faceDet=null;
-function stopCam(){bdayStop();cancelAnimationFrame(camRaf);[camStream,micStream].forEach(m=>{if(m)m.getTracks().forEach(t=>t.stop())});camStream=micStream=null}
+function stopCam(){bdayStop();cancelAnimationFrame(camRaf);[camStream,micStream].forEach(m=>{if(m)m.getTracks().forEach(t=>t.stop())});camStream=micStream=null;gtSession('playback')}
 /* iPhone 不理 audio.volume，所以背景音樂要淡入淡出就接到 Web Audio 的音量上 */
 let bgmG=null;
 function bgmFade(to,sec){try{const c=ctx();if(!bgmG){const src=c.createMediaElementSource(bgm);bgmG=c.createGain();src.connect(bgmG);bgmG.connect(c.destination)}
@@ -1508,7 +1511,7 @@ function finale(){
   $('#camOn').onclick=()=>stage(true);$('#camOff').onclick=()=>stage(false);
 }
 async function stage(useCam){
-  const fin=$('#finale');ctx();
+  const fin=$('#finale');ctx();gtSession('play-and-record');
   fin.innerHTML=`<video id="cv" playsinline muted autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)"></video>
    <div id="hat" style="position:absolute;left:50%;top:54%;width:30vw;max-width:150px;transform:translate(-50%,-100%);transform-origin:50% 100%;pointer-events:none;display:none;z-index:3;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))"></div>
    ${BLN}<div id="dimv"></div><div id="cake" style="position:absolute;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(84vw,340px,42vh);aspect-ratio:360/300;z-index:3">${CAKE}<div id="candles"></div></div>
@@ -1728,6 +1731,11 @@ function refreshEnd(stamp){const e=$('#endc');if(!e)return;const ok=cleared.incl
     draw();if(openT<1||riseT<1&&opened||parts.length||drag||!opened)raf=requestAnimationFrame(step);else{raf=0}}
   function begin(){if(!raf)raf=requestAnimationFrame(step)}
   const pos=e=>{const r=tp.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))};
+  /* iPhone 只有「點一下、手指離開」才肯出聲，一路拖著撕是沒聲音的：所以先點一下包裹，把聲音叫醒，再撕膠帶 */
+  let armed=false;const pc=$('#parcel'),wake=()=>{try{const c=ctx(),b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start();c.resume()}catch(e){}};
+  function arm(){if(armed)return;armed=true;wake();try{sfx.thud()}catch(e){}pc.classList.remove('knock');void pc.offsetWidth;pc.classList.add('knock');$('#phint').textContent='沿著膠帶，從左往右，把它撕開 →'}
+  pc.addEventListener('click',()=>{if(!opened&&prog<.05)arm()});
+  addEventListener('pointerup',wake,{once:true});addEventListener('touchend',wake,{once:true});
   tp.addEventListener('pointerdown',e=>{if(opened)return;ctx();drag=true;tp.setPointerCapture(e.pointerId);const p=pos(e);if(p<.22&&p>=prog-.05){prog=Math.max(prog,p)}lastX=e.clientX;lastT=performance.now();lastMove=lastT;ripStart();begin()});
   tp.addEventListener('pointermove',e=>{if(!drag||opened)return;const p=pos(e),now=performance.now();
     if(p>prog){const dp=p-prog,dtm=Math.max(8,now-lastT)/1000;speed=Math.min(2,dp*3.4/dtm*.12+speed*.3);prog=p;lastMove=now;lastT=now;
