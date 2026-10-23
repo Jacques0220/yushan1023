@@ -488,6 +488,19 @@ body{background:#f4ead2}
 .hc-tape.t1{left:calc(50% - 115px);top:8%;transform:rotate(-30deg)}.hc-tape.t2{left:calc(50% + 50px);top:9%;transform:rotate(28deg);background:rgba(234,180,74,.8)}
 .hstage .cvwrap{z-index:1}.hstage .ht{z-index:2}
 @media (prefers-reduced-motion:reduce){.pdrift i,.hc-pol{animation:none}}
+.memgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(86vw,340px);margin:4px auto 0;perspective:700px}
+.mcard{position:relative;aspect-ratio:1;border:0;background:none;padding:0;transform:rotate(var(--r));transition:transform .2s}
+.mcard i{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid var(--ink);border-radius:6px;box-shadow:2px 3px 0 rgba(58,42,31,.55);transition:transform .45s cubic-bezier(.3,1.3,.5,1);display:grid;place-items:center}
+.mcard .mb{background:var(--noise),repeating-linear-gradient(45deg,#fbe3e6 0 6px,#fffdf6 6px 12px)}
+.mcard .mf{transform:rotateY(180deg);background-size:cover;background-position:center;border-color:#fff;outline:2px solid var(--ink)}
+.mcard .mf em{position:absolute;left:0;right:0;bottom:0;font:normal 10.5px var(--hand);background:rgba(255,253,246,.88);color:var(--ink);text-align:center;padding:1px 0;opacity:0;transition:opacity .3s}
+.mcard.on .mb{transform:rotateY(-180deg)}.mcard.on .mf{transform:rotateY(0)}
+.mcard.ok{transform:rotate(0) scale(.96)}.mcard.ok .mf em{opacity:1}.mcard.ok .mf{outline-color:var(--green);box-shadow:0 0 0 3px rgba(63,122,103,.35)}
+.memprize{position:relative;width:min(70vw,260px);margin:6px auto 0;padding:10px;background:var(--noise),#fff;box-shadow:2px 6px 14px rgba(58,42,31,.35);transform:rotate(-2deg)}
+.memprize .wtape{top:-10px;left:50%;margin-left:-40px;width:80px;height:20px}
+.mpz{display:grid;grid-template-columns:repeat(4,1fr);aspect-ratio:4/5}
+.mpz i{background-size:400% 500%;animation:pzin .5s cubic-bezier(.3,1.5,.5,1) backwards}
+@keyframes pzin{from{opacity:0;transform:scale(1.8) rotate(25deg)}}
 </style>
 </head>
 <body>
@@ -582,8 +595,10 @@ const LETTER=[
  '因為住得太近，小時候我常常在你家過夜。叔叔煮的甜酸螃蟹是我的最愛，真的無敵好吃；還有罐頭隨手炒一炒，也美味到不行。',
  '以前每次考試、每次重大比賽，我都會請你幫我跟你家的大聖爺爺 bobi bobi，保佑我順順利利、拿獎回來。',
  '後來讀高中，我們幾乎無時無刻都黏在一起。本來我並沒有要讀高三，結果到後面突然跑進來，跟你一起讀了。我的華語課本，一直到考完統考都沒有買過，因為我一直在用你的。',
+ '中學的日子，好像每天都是一起的：一起去上廁所、一起去拿飯盒、一起衝去搶 nasi lalap。我不愛做筆記，所以總是聽你解釋你自己寫好的數學 formula，還有化學那些。放學要去補習之前，我們就先跑去 Uncle Bob 買東西吃。',
  '你還每天唸我：我一思考就要咬東西，你說我是老鼠，會咬 jacket，也會咬鉛筆。',
  '畢業典禮那天，我們一起站上台表演《幾分之幾》。那首歌，到現在還是我們的。',
+ '其實一開始，我不太愛聽華語歌，聽的都是跟著哥哥聽的歌。可是你每次坐我的車回家，都放華語歌，聽著聽著，我也開始愛聽了。一直到我上了大學，開車放的還是華語歌，尤其是《幾分之幾》。我們到現在，依然還是會聽。',
  '二十歲這一年，希望你繼續平平安安、開開心心，繼續寫你愛寫的文學。',
 ];
 /* ========================================== */
@@ -636,7 +651,7 @@ const NODES=[
   {x:262, y:190,name:'大餐訂單',icon:'ticket'},
   {x:96, y:290,name:'挑青菜',icon:'leaf'},
   {x:262, y:390,name:'彈吉他',icon:'guitar'},
-  {x:96, y:490,name:'二十片拼圖',icon:'puzzle'},
+  {x:96, y:490,name:'翻翻回憶',icon:'puzzle'},
   {x:200,y:580,name:'蛋糕',icon:'cake'},
 ];
 const _k='stroke="#3a2a1f" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"',_sh='fill="rgba(58,42,31,.15)"';
@@ -703,7 +718,7 @@ const LV=[
   {name:'大餐訂單',how:['訂單上有四樣：薯條、炸雞、土豆泥、可樂。','照著步驟，一樣一樣做出來。'],run:lvMcd},
   {name:'挑青菜',how:['把盤子上的青菜，偷偷丟給 Poppy 和 Apollo 吃。','大人回頭看的時候，不能動手。','好吃的別丟錯。'],run:lvVeg},
   {name:'彈吉他',how:['撥片會順著琴弦滑下來。','滑到圓鈕上的時候，點同顏色的鈕；有長尾巴的，要按住到尾巴結束。','彈完這段《太聰明》，打中一半就過關 🔊'],run:lvGuitar,prep:gtPrep},
-  {name:'二十片拼圖',how:['點一片，再點另一片，兩片會交換。','把二十片拼回原來的樣子。'],run:lvPuzzle},
+  {name:'翻翻回憶',how:['翻開兩張牌，一樣的就會留著。','全部配對成功，二十片拼圖就會拼回來。'],run:lvMemory},
 ];
 /* a little host for every level, who explains the rules */
 const _o='stroke="#3a2a1f" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
@@ -734,7 +749,7 @@ const HOSTS=[
    ${eye2(42,49)}${eye2(58,49)}<path d="M37 41L46 42M54 42L63 41" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M37 41L46 42M54 42L63 41" stroke="#bbb" stroke-width="1" stroke-linecap="round"/>
    <path d="M38 60Q44 56 50 59Q56 56 62 60Q60 64 50 63Q40 64 38 60Z" fill="#fff" ${_o}/><path d="M43 63Q50 82 57 63Z" fill="#fff" ${_o}/><path d="M46 62Q50 65 54 62" stroke="#c98a7a" stroke-width="1.6" fill="none"/>${blush(36,57,3.4)}${blush(64,57,3.4)}
    <g transform="translate(78 84) rotate(-30)"><path d="M0 4L0 18" stroke="#fffaf0" stroke-width="5" stroke-linecap="round"/><path d="M-8 -6Q-8 -16 0 -16Q8 -16 8 -6Q8 6 0 6Q-8 6 -8 -6Z" fill="#d9953f" ${_o}/></g>`,
-  say:['哈囉～玉珊小姐！我是炸雞爺爺 👴🍗','今天的大餐有四樣：大薯條、炸雞、土豆泥、可樂。一樣一樣照著步驟做。','做得不好的話……爺爺的鬍子會翹起來喔！']},
+  say:['哈囉～玉珊小姐！我是炸雞爺爺 👴🍗','今天的大餐有四樣：大薯條、炸雞、土豆泥配黑胡椒醬、可樂。一樣一樣照著步驟做。','做得不好的話……就拿不到「KFC 大師」的稱號囉！']},
  {n:'小新',bg:'#d8efc8',svg:`<path d="M0 0H100V112H0Z" fill="#d8efc8"/><path d="M0 92Q50 84 100 92V112H0Z" fill="#a6d48a"/>${[[10,96],[24,100],[78,98],[90,94]].map(([x,y])=>`<path d="M${x} ${y}l2 -6l2 6M${x+4} ${y}l2 -5" stroke="#6aa65a" stroke-width="1.4" fill="none"/>`).join('')}
    <path d="M34 112L36 90H64L66 112Z" fill="#f2c94a" ${_o}/><path d="M50 92V112" stroke="#c99b2a" stroke-width="1.4"/>
    <path d="M30 98Q30 76 50 74Q70 76 70 98Z" fill="#e23b3b" ${_o}/><path d="M30 90L20 82" stroke="#f6d2b0" stroke-width="7" stroke-linecap="round"/><circle cx="18" cy="80" r="5" fill="#f6d2b0" ${_o}/>
@@ -759,7 +774,7 @@ const HOSTS=[
    <ellipse cx="50" cy="106" rx="48" ry="12" fill="#c98a5a" ${_o}/><ellipse cx="50" cy="104" rx="40" ry="8" fill="#e8b98a"/>
    <g transform="translate(-6 8) scale(.84)"><path d="M10 112Q8 80 30 76H44Q62 80 60 112Z" fill="#f2cf94" ${_o}/><path d="M18 90q4 6 0 12M48 90q-4 6 0 12" stroke="#d9a860" stroke-width="1.4" fill="none"/><ellipse cx="17" cy="48" rx="8.5" ry="17" fill="#dfa45a" ${_o} transform="rotate(16 17 48)"/><ellipse cx="55" cy="48" rx="8.5" ry="17" fill="#dfa45a" ${_o} transform="rotate(-16 55 48)"/><ellipse cx="36" cy="47" rx="20" ry="19" fill="#f2cf94" ${_o}/><path d="M30 30q3 -5 6 0q3 -5 6 0" fill="#f2cf94" ${_o}/><ellipse cx="36" cy="58" rx="10" ry="8" fill="#fbe8c6" ${_o}/>${eye2(29,45)}${eye2(43,45)}<ellipse cx="36" cy="54" rx="4.4" ry="3.2" fill="#3a2a1f"/><path d="M31 60Q36 64 41 60" fill="none" ${_o}/><path d="M33 62Q33 71 36 71Q39 71 39 62Z" fill="#ef8a96" ${_o}/>${blush(24,54,3)}${blush(48,54,3)}</g>
    <g transform="translate(40 12) scale(.84)"><path d="M10 112Q8 80 30 76H44Q62 80 60 112Z" fill="#fffaf0" ${_o}/><path d="M42 88Q54 90 54 104Q46 102 42 94Z" fill="#c9a07a" opacity=".6"/><path d="M24 34Q6 26 4 46Q8 50 14 48Q18 40 24 40Z" fill="#7a4a2a" ${_o}/><path d="M4 46Q8 50 14 48L10 42Z" fill="#231915"/><path d="M48 34Q66 26 68 46Q64 50 58 48Q54 40 48 40Z" fill="#7a4a2a" ${_o}/><path d="M68 46Q64 50 58 48L62 42Z" fill="#231915"/><ellipse cx="36" cy="48" rx="20" ry="19" fill="#fffaf0" ${_o}/><path d="M38 30Q52 30 54 44Q52 52 42 50Q36 40 38 30Z" fill="#5a3a26"/><path d="M40 33Q48 32 50 40" stroke="#a87a4a" stroke-width="2" fill="none"/><ellipse cx="36" cy="58" rx="10" ry="8" fill="#fffaf0" ${_o}/>${eye2(29,45)}${eye2(43,45)}<ellipse cx="36" cy="54" rx="4.4" ry="3.2" fill="#3a2a1f"/><path d="M31 60Q36 64 41 60" fill="none" ${_o}/><circle cx="30" cy="62" r=".9" fill="#3a2a1f"/><circle cx="42" cy="61" r=".9" fill="#3a2a1f"/>${blush(24,54,3)}</g>`,
-  say:['汪！（Poppy：玉珊～前面四關的拼圖都找回來了！）','汪汪！（Apollo：點一片，再點另一片，兩片就會交換位置。）','汪～！（兩隻一起：把二十片拼回原來的樣子，就有驚喜喔！）']}
+  say:['汪！（Poppy：玉珊～前面四關的拼圖都找回來了！）','汪汪！（Apollo：這裡有十六張回憶牌，一次翻兩張，一樣的就會留著，不一樣會蓋回去。）','汪～！（兩隻一起：全部配對成功，二十片拼圖就會拼回來，然後就有驚喜喔！）']}
 ];
 const PIECES={0:5,1:5,2:5,3:5};
 const ORDER=[7,2,14,5,18,0,11,9,16,3,12,19,6,1,15,10,4,17,8,13];
@@ -841,6 +856,8 @@ const DOODLES={
    <g transform="rotate(-20 96 78)"><rect x="76" y="74" width="46" height="8" fill="#eab44a"/><path d="M122 74L130 78L122 82Z" fill="#f6d3b0"/><path d="M92 74q2 3 0 8M96 74q2 3 0 8" fill="none" stroke-width="1.4"/></g><path d="M44 94v6M64 94v6" stroke-width="2.4"/>`),
  mic:DD(`<path d="M50 52L40 96L52 98L62 54Z" fill="#3a2a1f"/><circle cx="58" cy="36" r="18" fill="#cfd6d2"/><path d="M44 30H72M42 38H74M46 46H70M52 20V52M64 20V52" fill="none" stroke="#8a948f" stroke-width="1.2"/><circle cx="58" cy="36" r="18" fill="none"/>
    <text x="90" y="42" font-size="28" fill="#d4573b" stroke="none">♪</text><text x="100" y="78" font-size="22" fill="#3f7a67" stroke="none">♫</text><text x="78" y="100" font-size="16" fill="#eab44a" stroke="none">♪</text>`),
+ bento:DD(`<path d="M18 58Q18 92 65 92Q112 92 112 58Z" fill="#fffaf0"/><path d="M24 58Q40 34 65 36Q92 34 106 58Z" fill="#fff"/><path d="M40 52Q52 40 66 46Q60 54 40 52Z" fill="#d98a3a"/><circle cx="82" cy="48" r="7" fill="#d4573b"/><path d="M72 54q6 -6 14 -2" fill="none" stroke="#3f9a5a" stroke-width="3"/><path d="M30 56q10 -4 20 0" fill="none" stroke="#5aa64a" stroke-width="3"/><ellipse cx="66" cy="58" rx="46" ry="4" fill="none"/><path d="M14 60H116" stroke-width="2.4"/><text x="65" y="84" text-anchor="middle" font-size="11" font-family="Iansui,serif" fill="#3a2a1f" stroke="none">nasi lalap</text>`),
+ car:DD(`<path d="M14 76Q14 60 30 58L42 40Q46 34 56 34H84Q92 34 96 42L104 58Q118 60 118 76V84H14Z" fill="#ef9aa6"/><path d="M48 42H66V58H38ZM72 42H88L96 58H72Z" fill="#d6ecf7"/><circle cx="38" cy="86" r="10" fill="#3a2a1f"/><circle cx="38" cy="86" r="4" fill="#cfd6d2"/><circle cx="94" cy="86" r="10" fill="#3a2a1f"/><circle cx="94" cy="86" r="4" fill="#cfd6d2"/><text x="18" y="30" font-size="20" fill="#d4573b" stroke="none">♪</text><text x="102" y="24" font-size="16" fill="#3f7a67" stroke="none">♫</text>`),
  pen:DD(`<g transform="rotate(-6 60 60)"><rect x="18" y="22" width="80" height="78" fill="#fffdf6"/>${[38,50,62,74,86].map(y=>`<path d="M26 ${y}H90" stroke="#cfe3f0" stroke-width="1.4"/>`).join('')}<path d="M28 48q6 -6 12 0t12 0t12 0M28 60q8 -5 16 0t14 0" fill="none" stroke="#3a2a1f" stroke-width="1.6"/></g>
    <g transform="rotate(38 96 50)"><rect x="90" y="8" width="13" height="58" rx="3" fill="#3f7a67"/><rect x="90" y="8" width="13" height="10" fill="#2f5e50"/><path d="M90 66L96.5 82L103 66Z" fill="#e7c87a"/><path d="M96.5 70V80" stroke-width="1"/></g>`)
 };
@@ -960,14 +977,14 @@ function lvMcd(box,done){
     <path id="mheap" d="M84 112Q150 62 216 112Z" fill="#f6e7b8" stroke="${INK}" stroke-width="2.4" opacity="${withGravy?1:mashP.toFixed(2)}"/>
     <g id="mlumps" opacity="${withGravy?0:(1-mashP).toFixed(2)}">${lumps.map(([x,y,r])=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*.75}" fill="#f0d68a" stroke="${INK}" stroke-width="2"/><path d="M${x-r*.4} ${y-r*.3}q${r*.3} -${r*.3} ${r*.6} 0" stroke="#fff4c8" stroke-width="1.6" fill="none"/>`).join('')}</g>
     <path d="M82 112H218" ${W(4)}/><path d="M82 112H218" stroke="#fff" stroke-width="1.8"/>
-    <g id="gpool"></g><g id="gstream" opacity="0"><path d="M150 0V80" stroke="#6b3d1c" stroke-width="7" stroke-linecap="round"/></g>
-    ${withGravy?`<g transform="translate(150 -6)"><path d="M-30 6H30L22 26H-22Z" fill="#fffaf0" ${W(2.2)}/><text y="21" text-anchor="middle" font-size="11" font-family="Iansui,serif" fill="${INK}">肉汁</text></g>`
+    <g id="gpool"></g><g id="gstream" opacity="0"><path d="M150 0V80" stroke="#3e2416" stroke-width="7" stroke-linecap="round"/></g>
+    ${withGravy?`<g transform="translate(150 -6)"><path d="M-30 6H30L22 26H-22Z" fill="#fffaf0" ${W(2.2)}/><text y="21" text-anchor="middle" font-size="9.5" font-family="Iansui,serif" fill="${INK}">黑胡椒醬</text></g>`
       :`<g id="masher" transform="translate(${mx} ${my})"><path d="M0 -40V8" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M0 -40V8" stroke="#c98a3e" stroke-width="4.5" stroke-linecap="round"/><path d="M-20 8H20L16 18H-16Z" fill="#cfd6d2" ${W(2.2)}/><path d="M-12 11V16M-4 11V16M4 11V16M12 11V16" stroke="${INK}" stroke-width="1.4"/></g>`}`}
-  function gaugeGravy(){$('#fgw').innerHTML=`<div style="position:relative;height:22px;border:3px solid ${INK};border-radius:12px;background:linear-gradient(90deg,#f6e7b8,#6b3d1c);box-shadow:2px 3px 0 rgba(58,42,31,.6)"><i style="position:absolute;top:-6px;bottom:-6px;left:${GZ[0]*100}%;width:${(GZ[1]-GZ[0])*100}%;border:3px dashed var(--green);background:rgba(63,122,103,.18);border-radius:9px"></i><i id="ndl" style="position:absolute;top:-9px;left:0;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:12px solid ${INK};transform:translateX(-7px)"></i></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-top:5px"><span>沒味道</span><span style="color:var(--green);font-weight:700">剛剛好</span><span>太多了</span></div>`}
-  function drawGravy(){const g=$('#gpool');if(!g)return;const q=Math.min(1,gv),rx=8+46*q,ry=3+11*q;let d=`<ellipse cx="150" cy="${92+6*q}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="#7a4a22" stroke="${INK}" stroke-width="1.6"/><ellipse cx="${(146-rx*.3).toFixed(1)}" cy="${(90+6*q).toFixed(1)}" rx="${(rx*.3).toFixed(1)}" ry="${(ry*.25).toFixed(1)}" fill="#b07a46" opacity=".7"/>`;
+  function gaugeGravy(){$('#fgw').innerHTML=`<div style="position:relative;height:22px;border:3px solid ${INK};border-radius:12px;background:linear-gradient(90deg,#f6e7b8,#6b3d1c);box-shadow:2px 3px 0 rgba(58,42,31,.6)"><i style="position:absolute;top:-6px;bottom:-6px;left:${GZ[0]*100}%;width:${(GZ[1]-GZ[0])*100}%;border:3px dashed var(--green);background:rgba(63,122,103,.18);border-radius:9px"></i><i id="ndl" style="position:absolute;top:-9px;left:0;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:12px solid ${INK};transform:translateX(-7px)"></i></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-top:5px"><span>少少</span><span style="color:var(--green);font-weight:700">剛剛好</span><span>超多</span></div>`}
+  function drawGravy(){const g=$('#gpool');if(!g)return;const q=Math.min(1,gv),rx=8+46*q,ry=3+11*q;let d=`<ellipse cx="150" cy="${92+6*q}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="#3e2416" stroke="${INK}" stroke-width="1.6"/><ellipse cx="${(146-rx*.3).toFixed(1)}" cy="${(90+6*q).toFixed(1)}" rx="${(rx*.3).toFixed(1)}" ry="${(ry*.25).toFixed(1)}" fill="#b07a46" opacity=".7"/>`;
     if(gv>GZ[1])for(let k=0;k<4;k++){const x=104+k*30,l=(gv-GZ[1])*120;d+=`<path d="M${x} 108q-3 ${l.toFixed(0)} 2 ${(l+6).toFixed(0)}" stroke="#7a4a22" stroke-width="5" stroke-linecap="round" fill="none"/>`}g.innerHTML=d}
-  function judgeGravy(){if(gv>=GZ[0]&&gv<=GZ[1]){phase='gravy-done';sfx.ding();msg('肉汁剛剛好！');setTimeout(()=>{if(!dead)advance()},900)}
-    else if(gv<GZ[0]){sfx.bad();msg('肉汁太少了，再淋一點。（按住繼續）')}else{sfx.bad();msg('太多了啦！重來。');gv=0;drawGravy()}}
+  function judgeGravy(){if(gv<.06)return;phase='gravy-done';const m=gv<.3?'這也太少了吧！不過你喜歡就好～':gv<GZ[0]?'少少的，清爽派。':gv<=GZ[1]?'剛剛好！完美的黑胡椒醬比例 👌':gv<1?'哇，重口味派！':'這也太多了吧！土豆泥要游泳了 😂';
+    sfx.ding();msg(m);ctl('');setTimeout(()=>{if(!dead)advance()},1400)}
   /* ---- KFC bucket ---- */
   const BK=[[48,150,-30],[76,96,20],[252,150,30],[226,96,-20],[150,34,80]];let inB=0,bkBusy=false;
   function sceneBucket(){const stripes=[0,1,2,3,4,5,6].map(i=>`<path d="M${92+i*18} 96L${104+i*14} 188H${111+i*14}L${101+i*18} 96Z" fill="#e4002b"/>`).join('');
@@ -1027,13 +1044,13 @@ function lvMcd(box,done){
       msg(`${ORD[st-1]}完成！`);setTimeout(()=>{if(!dead)setPhase()},1200)}
     else setPhase()}
   function setPhase(){phase=STAT[st][pi];p=0;frying=false;salting=false;pouring=false;prog();
-    const tip={fry:'要炸到金黃酥脆',salt:'鹽要撒得剛剛好',coat:'炸雞要裹滿麵粉',mash:'把馬鈴薯壓成泥',gravy:'淋上肉汁，不要太多',bucket:'裝進桶子裡',soda:'冰要幾塊自己決定，可樂倒到剛好滿',lid:'蓋上蓋子，插上吸管'}[phase];
+    const tip={fry:'要炸到金黃酥脆',salt:'鹽要撒得剛剛好',coat:'炸雞要裹滿麵粉',mash:'把馬鈴薯壓成泥',gravy:'黑胡椒醬，淋多少你決定',bucket:'裝進桶子裡',soda:'冰要幾塊自己決定，可樂倒到剛好滿',lid:'蓋上蓋子，插上吸管'}[phase];
     $('#ftk').innerHTML=`<b>訂單 ${st+1} / 4</b>　玉珊　${ORD[st]} ×1<br><span style="font-size:13px;opacity:.8">${tip}</span>`;
     if(phase==='fry'){by=-46;sceneFry();gaugeFry();msg('按住「下鍋」，指針到綠色框裡（金黃色）就放開。');holdBtn(st===0?'按住　下鍋 🍟':'按住　下鍋 🍗','red',()=>{frying=true;p=0;sizzle(true)},()=>{if(!frying)return;frying=false;sizzle(false);judgeFry()})}
     else if(phase==='salt'){land=[];grains=[];sceneSalt();gaugeSalt();msg('在薯條上面來回滑動，把鹽撒進去，撒到「剛剛好」再按上桌。');ctl('<button class="btn" id="serve">上桌</button>');$('#serve').onclick=serve}
     else if(phase==='coat'){coat=0;sceneCoat();gaugeCoat();msg('在炸雞上來回滑動，把麵粉裹滿。');ctl('')}
     else if(phase==='mash'){mashP=0;mcp=null;mx=150;my=50;sceneMash(false);$('#fgw').innerHTML=`<div style="position:relative;height:22px;border:3px solid ${INK};border-radius:12px;overflow:hidden;background:#fffaf0;box-shadow:2px 3px 0 rgba(58,42,31,.6)"><i id="cfill" style="position:absolute;left:0;top:0;bottom:0;width:0;background:#f0d68a"></i></div><div style="font-size:14px;margin-top:5px">壓成泥</div>`;ctl('');msg('拿著壓泥器，在碗上上下來回壓，把馬鈴薯壓成泥。')}
-    else if(phase==='gravy'){gv=0;gpour=false;sceneMash(true);drawGravy();gaugeGravy();msg('按住「淋肉汁」，肉汁到綠色框就放開。');holdBtn('按住　淋肉汁 🥄','red',()=>{gpour=true;if(gv>GZ[1])gv=0},()=>{if(!gpour)return;gpour=false;judgeGravy()})}
+    else if(phase==='gravy'){gv=0;gpour=false;sceneMash(true);drawGravy();gaugeGravy();msg('按住「淋黑胡椒醬」，想淋多少就淋多少，放開就好。');holdBtn('按住　淋黑胡椒醬 🥄','red',()=>{gpour=true},()=>{if(!gpour)return;gpour=false;judgeGravy()})}
     else if(phase==='bucket'){inB=0;bkBusy=false;sceneBucket();$('#fgw').innerHTML='';ctl('');msg('炸好了！點一點炸雞，把它們裝進桶子裡。')}
     else if(phase==='soda'){cubes=[];ice=0;liq=0;cupX=150;cupAt=null;dragging=null;dispensing=null;drops=[];dropT=0;sceneSoda('soda');gaugeCola();
       msg('把杯子拖到「冰塊」或「可樂」的出口下面，按住出冰、出可樂。冰要幾塊自己決定，可樂倒到綠色框。');
@@ -1084,7 +1101,7 @@ function lvMcd(box,done){
       const tilt=salting?160+Math.sin(now/45)*10:150;shaker.setAttribute('transform',`translate(${lx.toFixed(1)} ${ly.toFixed(1)}) rotate(${tilt})`);
       for(let i=grains.length-1;i>=0;i--){const g=grains[i];g.vy+=240*dt;g.y+=g.vy*dt;g.x+=g.vx*dt;if(g.y>=g.ty){grains.splice(i,1);if(land.length<110){const q={x:g.x,y:g.ty};land.push(q);addDot(q)}}}
       gnode.innerHTML=grains.map(g=>`<circle cx="${g.x.toFixed(1)}" cy="${g.y.toFixed(1)}" r="1.5" fill="#fffdf6" stroke="rgba(58,42,31,.5)" stroke-width=".5"/>`).join('');setNeedle(land.length/SMAX)}
-    else if(phase==='gravy'){if(gpour){gv=Math.min(1.1,gv+dt*.32);drawGravy();if(Math.random()<.3)tone(220+Math.random()*80,.03,'sine',.03);if(gv>=1.05){gpour=false;judgeGravy()}}
+    else if(phase==='gravy'){if(gpour){gv=Math.min(1.1,gv+dt*.32);drawGravy();if(Math.random()<.3)tone(220+Math.random()*80,.03,'sine',.03);if(gv>=1.1){gpour=false;judgeGravy()}}
       const gs=$('#gstream');if(gs){gs.setAttribute('opacity',gpour?1:0);if(gpour)$('path',gs).setAttribute('d','M150 20V92')}setNeedle(Math.min(gv,1))}
     else if(phase==='soda'){const lr=$('#liqr');if(lr){
       const cola=dispensing==='cola',icing=dispensing==='ice';
@@ -1204,17 +1221,17 @@ function lvVeg(box,done){
       msg(k?'Apollo 一口吃掉了！':'Poppy 吃得好開心！');setTimeout(()=>{d.chew=0;if(!dead)drawD()},650)})(t0)}
   let items=[],wsig='';
   sv.innerHTML=`<g id="vw"></g><g id="vtr"><path d="M0 98H300V112H0Z" fill="#c98a52" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/><path d="M6 105H40M70 104H130M170 106H220M250 104H294" stroke="#8a5a34" stroke-width="1.4"/>
-    <ellipse cx="150" cy="212" rx="134" ry="82" fill="#fffaf0" ${sw}/><ellipse cx="150" cy="212" rx="118" ry="70" fill="none" stroke="#6aa7c8" stroke-width="2.4"/><ellipse cx="150" cy="212" rx="112" ry="65" fill="none" stroke="#6aa7c8" stroke-width="1" stroke-dasharray="3 5"/>
+    <ellipse cx="150" cy="213" rx="146" ry="88" fill="#fffaf0" ${sw}/><ellipse cx="150" cy="213" rx="132" ry="78" fill="none" stroke="#6aa7c8" stroke-width="2.4"/><ellipse cx="150" cy="213" rx="126" ry="73" fill="none" stroke="#6aa7c8" stroke-width="1" stroke-dasharray="3 5"/>
     <path d="M62 168Q90 146 130 142" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/></g><g id="vc"></g><g id="vi"></g><g id="vd"></g><g id="vf"></g>`;
   const gC=sv.querySelector('#vc'),gW=sv.querySelector('#vw'),gI=sv.querySelector('#vi'),gT=sv.querySelector('#vtr');
   function drawW(){const sig=WT.map(w=>w.st).join();if(sig===wsig)return;wsig=sig;gW.innerHTML=WT.map((w,i)=>watcher(w,i)).join('');gC.innerHTML=WT.filter(w=>w.st==='watch').map(w=>`<path d="M${w.x} 70L${w.x-70} 296L${w.x+70} 296Z" fill="rgba(234,180,74,.2)" stroke="rgba(212,87,59,.55)" stroke-width="1.6" stroke-dasharray="4 5"/>`).join('')}
   function drawI(){gI.innerHTML=items.filter(o=>!o.gone).map(o=>`<g data-id="${o.i}" transform="translate(${o.x.toFixed(0)} ${o.y.toFixed(0)}) rotate(${o.rot.toFixed(0)}) scale(${o.s.toFixed(2)})" style="opacity:${o.dim?.3:1}">${o.v?VEG[o.k]:FOOD[o.k]}<circle r="19" fill="transparent"/></g>`).join('')}
   function deal(){found=0;$('#vn').textContent=0;
-    const pts=[];let md=40,guard=0;
-    for(let n=0;n<16;n++){let p=null;for(let tries=0;tries<80&&!p;tries++){const x=50+Math.random()*200,y=156+Math.random()*112;if(((x-150)/100)**2+((y-212)/56)**2<=1&&pts.every(q=>Math.hypot(q[0]-x,q[1]-y)>md))p=[x,y]}
-      if(!p){if(md<=31){md=26}else md=Math.max(31,md-3);if(md<=26&&++guard>40)p=[150+(Math.random()-.5)*160,212+(Math.random()-.5)*80];else{n--;continue}}pts.push(p)}
+    const pts=[],DX=44,DY=37;
+    for(let r=-2;r<=2;r++)for(let k=-4;k<=4;k++){const x=k*DX+((r+10)%2?DX/2:0),y=r*DY;if((x/118)**2+(y/64)**2<=.92)pts.push([150+x+(Math.random()*6-3),213+y+(Math.random()*5-2.5)])}
     const kinds=[0,1,2,3,4,5].sort(()=>Math.random()-.5);
-    const list=pts.map((p,i)=>({v:i<NV,k:i<NV?kinds[i]:(i-NV)%6,s:1+Math.random()*.2,rot:Math.random()*60-30,x:p[0],y:p[1],gone:false,dim:false}));
+    for(let i=pts.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pts[i],pts[j]]=[pts[j],pts[i]]}
+    const list=pts.map((p,i)=>({v:i<NV,k:i<NV?kinds[i]:(i-NV)%6,s:.92+Math.random()*.14,rot:Math.random()*60-30,x:p[0],y:p[1],gone:false,dim:false}));
     list.sort(()=>Math.random()-.5);items=list.map((o,i)=>(o.i=i,o));
     wsig='';resetW();drawW();drawI();msg('把青菜偷偷丟給 Poppy 和 Apollo 吃。大人回頭看的時候，不能動手！')}
   const pick=e=>{if(won)return;ctx();const g=e.target.closest('[data-id]');if(!g)return;e.preventDefault();if(lock>0)return;
@@ -1380,6 +1397,22 @@ function lvGuitar(box,done){
   return()=>{dead=true;cancelAnimationFrame(raf);removeEventListener('keydown',onKey);removeEventListener('keyup',onKeyUp);removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);gtr.pause();try{gtr.currentTime=0}catch(e){}release()};
 }
 
+/* ---------- level 5 : memory cards; the 20 collected pieces become the prize ---------- */
+function lvMemory(box,done){
+  const N=8,MC=['那年畢業','KFC 大餐','吃到笑','口罩三人組','草地上','吃麵中','lab 自拍','我們'];
+  box.innerHTML='<div class="memgrid" id="mg"></div><p class="prog" id="mp" style="margin-top:10px"></p>';
+  const g=$('#mg'),deck=[...Array(N).keys(),...Array(N).keys()];for(let i=deck.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[deck[i],deck[j]]=[deck[j],deck[i]]}
+  let open=[],found=0,tries=0,lock=false,dead=false;
+  deck.forEach((k,i)=>{const c=document.createElement('button');c.className='mcard';c.style.setProperty('--r',(((i*7)%5)-2)+'deg');c.innerHTML=`<i class="mb"><svg viewBox="-20 -20 40 40" width="46%"><path d="M0 14C-16 4-14-10-6-10C-2-10 0-6 0-4C0-6 2-10 6-10C14-10 16 4 0 14Z" fill="#ef9aa6" stroke="#3a2a1f" stroke-width="2" stroke-linejoin="round"/></svg></i><i class="mf" style="background-image:url(photos/mem/m${k}.webp)"><em>${MC[k]}</em></i>`;
+    c.onclick=()=>{if(lock||dead||c.classList.contains('on'))return;ctx();sfx.tick();c.classList.add('on');open.push([c,k]);
+      if(open.length===2){tries++;lock=true;const [[a,ka],[b,kb]]=open;
+        if(ka===kb){setTimeout(()=>{if(dead)return;a.classList.add('ok');b.classList.add('ok');sfx.ding();found++;open=[];lock=false;msg();if(found===N)win()},380)}
+        else setTimeout(()=>{if(dead)return;a.classList.remove('on');b.classList.remove('on');sfx.pop();open=[];lock=false;msg()},900)}};g.appendChild(c)});
+  function msg(){$('#mp').textContent=`配對 ${found} / ${N}・翻了 ${tries} 次`}
+  function win(){sfx.win();burstEl(g,70);setTimeout(()=>{if(dead)return;g.outerHTML=`<div class="memprize"><span class="wtape y"></span><div class="mpz">${[...Array(20).keys()].map(k=>`<i style="background-image:url(${PUZZLE});background-position:${k%4/3*100}% ${((k/4)|0)/4*100}%;animation-delay:${(k*.06).toFixed(2)}s"></i>`).join('')}</div></div>`;
+      $('#mp').innerHTML='<b style="font-size:18px">回憶都找回來了，二十片拼圖也拼好了！</b>';setTimeout(()=>{if(!dead)done()},3200)},900)}
+  msg();return()=>{dead=true};
+}
 /* ---------- level 4 : puzzle ---------- */
 function lvPuzzle(box,done){
   box.innerHTML='<div class="pzboard"><i class="wtape y" style="left:-14px;top:-6px;width:56px;height:18px;transform:rotate(-38deg)"></i><i class="wtape" style="right:-14px;top:-6px;width:56px;height:18px;transform:rotate(38deg)"></i><i class="wtape g" style="left:-14px;bottom:-6px;width:56px;height:18px;transform:rotate(38deg)"></i><i class="wtape b" style="right:-14px;bottom:-6px;width:56px;height:18px;transform:rotate(-38deg)"></i><div class="pzgrid" id="pg"></div></div><p class="prog" id="pp" style="margin-top:10px"></p><div class="row"><button class="btn alt sm rough" id="ph">給我一點提示</button></div>';
@@ -1439,7 +1472,7 @@ const BUNT=`<div class="bunt"><svg viewBox="0 0 390 96" preserveAspectRatio="non
 const BLN=`<div class="bln">${[[1,0,'#d4573b',1],[11,4.2,'#eab44a',.8],[86,1.6,'#6aa7c8',.95],[94,6.3,'#ef9aa6',1.1],[78,8.4,'#9fd0b6',.72],[19,9.1,'#ef9aa6',.7]].map(([x,dl,c,sc])=>`<i style="left:${x}%;animation-delay:-${dl}s;animation-duration:${(10+sc*4).toFixed(1)}s"><svg viewBox="0 0 40 92" width="${Math.round(50*sc)}" class="sk"><path d="M20 54Q13 66 22 76T18 92" stroke="#fff3c9" stroke-width="1.4" fill="none"/><path d="M20 2C32 2 38 14 38 24C38 38 28 50 20 53C12 50 2 38 2 24C2 14 8 2 20 2Z" fill="${c}" stroke="#3a2a1f" stroke-width="2"/><path d="M16.5 53L20 58L23.5 53Z" fill="${c}" stroke="#3a2a1f" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 15Q12 8 19 7" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" opacity=".7"/></svg></i>`).join('')}${[[6,18],[90,12],[4,46],[94,40],[12,72],[88,66],[50,6],[30,30],[70,28]].map(([x,y],k)=>`<b style="left:${x}%;top:${y}%;animation-delay:${(k*.37).toFixed(2)}s">✦</b>`).join('')}</div>`;
 /* music-box "Happy Birthday" (public-domain tune), synthesized, looping softly */
 let bdayOn=false,bdayT=null,bdayG=null;
-function bdaySong(){if(bdayOn)return;bdayOn=true;const c=ctx();bdayG=c.createGain();bdayG.gain.value=1;bdayG.connect(master);
+function bdaySong(){if(bdayOn)return;bdayOn=true;const c=ctx();bdayG=c.createGain();bdayG.gain.setValueAtTime(0,c.currentTime);bdayG.gain.linearRampToValueAtTime(1,c.currentTime+3);bdayG.connect(master);
   const B=.45,N=[[392,.75],[392,.25],[440,1],[392,1],[523,1],[494,2],[392,.75],[392,.25],[440,1],[392,1],[587,1],[523,2],[392,.75],[392,.25],[784,1],[659,1],[523,1],[494,1],[440,2],[698,.75],[698,.25],[659,1],[523,1],[587,1],[523,3]];
   const box=(f,t,v)=>[[f,v,1.4,'sine'],[f*2,v*.3,.55,'sine'],[f*3.01,v*.1,.25,'triangle']].forEach(([fr,vv,dc,ty])=>{const o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vv,t+.005);g.gain.exponentialRampToValueAtTime(.0004,t+dc);o.connect(g);g.connect(bdayG);o.start(t);o.stop(t+dc+.05)});
   (function play(){if(!bdayOn)return;let t=c.currentTime+.15;const t0=t;N.forEach(([f,d])=>{box(f,t,.085);t+=d*B});bdayT=setTimeout(play,(t-t0)*1000+1800)})()}
@@ -1471,7 +1504,7 @@ async function stage(useCam){
   }
   if(!hasMic&&useCam&&camStream){try{const m=await navigator.mediaDevices.getUserMedia({audio:true});camStream.addTrack(m.getAudioTracks()[0]);hasMic=true}catch(e){}}
   /* candles */
-  if(!bgm.paused){bgm.pause();}musicHold=true;bdaySong();
+  musicHold=true;{const v0=bgm.volume;let q=0;const f=setInterval(()=>{q+=.05;bgm.volume=Math.max(0,v0*(1-q));if(q>=1){clearInterval(f);bgm.pause();bgm.volume=v0}},120)}setTimeout(bdaySong,900);
   const wrap=$('#candles'),cols=['#d4573b','#eab44a','#3f7a67','#ef9aa6','#6aa7c8'];let lit=0;
   const spots=[];for(let i=0;i<12;i++){const a=(i+.5)/12*Math.PI*2;spots.push([180+Math.cos(a)*116,112+Math.sin(a)*26])}
   for(let i=0;i<8;i++){const a=(i+.25)/8*Math.PI*2;spots.push([180+Math.cos(a)*62,112+Math.sin(a)*13])}
@@ -1556,7 +1589,7 @@ function letter(){
   stopCam();if(!cleared.includes(NL)){cleared.push(NL);persist()}
   scrawl($('#lt .to'),5);
   const b=$('#lb'),jobs=[];LETTER.forEach((t,i)=>{const p=document.createElement('p');p.style.transitionDelay=(.3+i*.5)+'s';
-    const DECO_L={3:['pray','拜拜大聖爺爺',-4,1],4:['book','你的華語課本',4,0],5:['mouse','會咬鉛筆的老鼠',-3,1],6:['mic','《幾分之幾》',3,0],7:['pen','繼續寫',-4,1]};
+    const DECO_L={3:['pray','拜拜大聖爺爺',-4,1],4:['book','你的華語課本',4,0],5:['bento','搶 nasi lalap',-3,1],6:['mouse','會咬鉛筆的老鼠',3,0],7:['mic','《幾分之幾》',-4,1],8:['car','車上放的華語歌',4,0],9:['pen','繼續寫',-4,1]};
     const ph=DECO_L[i]?(()=>{const [k,cap,r,l]=DECO_L[i],d=document.createElement('div');d.className='pola dish'+(l?' l':'');d.style.setProperty('--r',r+'deg');d.innerHTML=`<span class="wtape ${['y','g','b'][i%3]}"></span>${DOODLES[k]}<i>${cap}</i>`;return d})():i===2?(()=>{const d=document.createElement('div');d.className='pola dish';d.style.setProperty('--r','4deg');d.innerHTML=`<span class="wtape y"></span>${DISH}<i>叔叔的甜酸螃蟹</i>`;return d})():null;if(ph)p.appendChild(ph);const tn=document.createTextNode('');p.appendChild(tn);p.style.cssText+=';opacity:1;transform:none;transition:none;display:none';jobs.push([tn,t,p]);b.appendChild(p);
     if(false){const q=pola(6,5);q.style.cssText+='float:none;display:block;margin:-6px 30px 8px auto';p.after(q)}});
   const sg=document.createElement('p');sg.innerHTML='<span class="sig2">— 杰克</span><br><span class="date">2026.10.23・馬來西亞</span>';sg.style.transitionDelay='.3s';b.appendChild(sg);
@@ -1568,7 +1601,7 @@ function letter(){
     if(ci<t.length){const ch=t[ci++];tn.data+=ch;const r=p.getBoundingClientRect(),br=lb.getBoundingClientRect();if(r.bottom>br.bottom-24)lb.scrollTop+=r.bottom-br.bottom+48;
       setTimeout(typeNext,'，。！；：、'.includes(ch)?280:62)}else{ji++;ci=0;setTimeout(typeNext,450)}}
   setTimeout(typeNext,900);
-  lb.addEventListener('click',e=>{if(skip||ji>=jobs.length||e.target.closest('button'))return;skip=true;jobs.forEach(([tn,t,p])=>{tn.data=t;p.style.display=''});$('#lt').classList.add('in')});
+  lb.addEventListener('click',e=>{if(ji>=jobs.length||e.target.closest('button'))return;const [tn,t,p]=jobs[ji];p.style.display='';ci=t.length;tn.data=t});
   $('#again').onclick=()=>{cleared=[];persist();try{localStorage.removeItem('ys-open')}catch(e){}location.reload()};
   $('#lclose').onclick=()=>{ctx();sfx.pop();wipe(()=>{closeLevel();const f=$('#finale');f.hidden=true;f.innerHTML='';refreshEnd(true);$$('#s-end [data-rv]').forEach(e=>e.classList.add('in'));$('#s-end').scrollIntoView({block:'center'})})};
 }
