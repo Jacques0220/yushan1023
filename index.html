@@ -1210,9 +1210,9 @@ function lvVeg(box,done){
   function drawW(){const sig=WT.map(w=>w.st).join();if(sig===wsig)return;wsig=sig;gW.innerHTML=WT.map((w,i)=>watcher(w,i)).join('');gC.innerHTML=WT.filter(w=>w.st==='watch').map(w=>`<path d="M${w.x} 70L${w.x-70} 296L${w.x+70} 296Z" fill="rgba(234,180,74,.2)" stroke="rgba(212,87,59,.55)" stroke-width="1.6" stroke-dasharray="4 5"/>`).join('')}
   function drawI(){gI.innerHTML=items.filter(o=>!o.gone).map(o=>`<g data-id="${o.i}" transform="translate(${o.x.toFixed(0)} ${o.y.toFixed(0)}) rotate(${o.rot.toFixed(0)}) scale(${o.s.toFixed(2)})" style="opacity:${o.dim?.3:1}">${o.v?VEG[o.k]:FOOD[o.k]}<circle r="19" fill="transparent"/></g>`).join('')}
   function deal(){found=0;$('#vn').textContent=0;
-    const pts=[];let md=36;
+    const pts=[];let md=40,guard=0;
     for(let n=0;n<16;n++){let p=null;for(let tries=0;tries<80&&!p;tries++){const x=50+Math.random()*200,y=156+Math.random()*112;if(((x-150)/100)**2+((y-212)/56)**2<=1&&pts.every(q=>Math.hypot(q[0]-x,q[1]-y)>md))p=[x,y]}
-      if(!p){md=Math.max(24,md-4);n--;continue}pts.push(p)}
+      if(!p){if(md<=31){md=26}else md=Math.max(31,md-3);if(md<=26&&++guard>40)p=[150+(Math.random()-.5)*160,212+(Math.random()-.5)*80];else{n--;continue}}pts.push(p)}
     const kinds=[0,1,2,3,4,5].sort(()=>Math.random()-.5);
     const list=pts.map((p,i)=>({v:i<NV,k:i<NV?kinds[i]:(i-NV)%6,s:1+Math.random()*.2,rot:Math.random()*60-30,x:p[0],y:p[1],gone:false,dim:false}));
     list.sort(()=>Math.random()-.5);items=list.map((o,i)=>(o.i=i,o));
