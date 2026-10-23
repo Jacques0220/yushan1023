@@ -503,6 +503,9 @@ body{background:#f4ead2}
 .memprize .wtape{top:-10px;left:50%;margin-left:-40px;width:80px;height:20px}
 .mpz{display:grid;grid-template-columns:repeat(4,1fr);aspect-ratio:4/5}
 .mpz i{background-size:400% 500%;animation:pzin .5s cubic-bezier(.3,1.5,.5,1) backwards}
+/* 關卡開著的時候，後面的頁面看不到，就別讓它一直動、一直重畫（手機會卡） */
+body.lvon #page,body.lvon #boot,body.lvon #bar{visibility:hidden}
+body.lvon .paper *,body.lvon #page *,body.lvon #boot *{animation-play-state:paused!important}
 @keyframes pzin{from{opacity:0;transform:scale(1.8) rotate(25deg)}}
 </style>
 </head>
@@ -719,7 +722,7 @@ const LV=[
   {name:'長途電話',how:['電話響了，先接起來。','慢慢轉旋鈕，轉到聲音最清楚。','記得把聲音打開 🔊'],run:lvPhone},
   {name:'大餐訂單',how:['訂單上有四樣：薯條、炸雞、土豆泥、可樂。','照著步驟，一樣一樣做出來。'],run:lvMcd},
   {name:'挑青菜',how:['把盤子上的青菜，偷偷丟給 Poppy 和 Apollo 吃。','大人回頭看的時候，不能動手。','好吃的別丟錯。'],run:lvVeg},
-  {name:'彈吉他',how:['撥片會順著琴弦滑下來。','滑到圓鈕上的時候，點同顏色的鈕；有長尾巴的，要按住到尾巴結束。','彈完這首《太聰明》，打中一半就過關 🔊'],run:lvGuitar,prep:gtPrep},
+  {name:'彈吉他',how:['撥片會順著琴弦滑下來。','滑到圓鈕上的時候，點同顏色的鈕；有長尾巴的，要按住到尾巴結束。','彈完這段《太聰明》副歌，打中一半就過關 🔊'],run:lvGuitar,prep:gtPrep},
   {name:'翻翻回憶',how:['翻開兩張牌，一樣的就會留著。','全部配對成功，二十片拼圖就會拼回來。'],run:lvMemory},
 ];
 /* a little host for every level, who explains the rules */
@@ -771,7 +774,7 @@ const HOSTS=[
    <ellipse cx="50" cy="48" rx="16" ry="18" fill="#f6d6b8" ${_o}/><path d="M33 44Q38 28 54 31Q64 33 68 44Q60 36 52 38Q42 38 33 44Z" fill="#231915"/><path d="M33 44Q31 52 33 60M67 44Q70 52 67 60" stroke="#231915" stroke-width="3" fill="none"/>
    <path d="M41 50Q44 47 47 50M53 50Q56 47 59 50" stroke="#3a2a1f" stroke-width="2" fill="none" stroke-linecap="round"/>${blush(39,55,3.6)}${blush(61,55,3.6)}<path d="M43 57Q50 66 57 57Z" fill="#fff" ${_o}/>
    <text x="50" y="106" text-anchor="middle" font-size="9" font-family="Arial,sans-serif" letter-spacing="1.4" fill="#f6c6cc">groupies</text>`,
-  say:['嗨，我是小綺貞 🌊','撥片滑到圓鈕上的時候就彈下去，有長尾巴的要按住不放。','一起彈完這首《太聰明》吧，打中一半就過關～']},
+  say:['嗨，我是小綺貞 🌊','撥片滑到圓鈕上的時候就彈下去，有長尾巴的要按住不放。','一起彈完這段《太聰明》副歌吧，打中一半就過關～']},
  {n:'Poppy & Apollo',bg:'#f3e3c8',svg:`<path d="M0 0H100V112H0Z" fill="#f3e3c8"/>${[[14,14,'#6aa7c8',-12],[82,12,'#ef9aa6',14],[88,48,'#eab44a',-8]].map(([x,y,c,r])=>`<path d="M${x-7} ${y-7}h5a2.4 2.4 0 0 1 4 0h5v5a2.4 2.4 0 0 1 0 4v5h-14z" fill="${c}" ${_o} transform="rotate(${r} ${x} ${y})"/>`).join('')}
    <ellipse cx="50" cy="106" rx="48" ry="12" fill="#c98a5a" ${_o}/><ellipse cx="50" cy="104" rx="40" ry="8" fill="#e8b98a"/>
    <g transform="translate(-6 8) scale(.84)"><path d="M10 112Q8 80 30 76H44Q62 80 60 112Z" fill="#f2cf94" ${_o}/><path d="M18 90q4 6 0 12M48 90q-4 6 0 12" stroke="#d9a860" stroke-width="1.4" fill="none"/><ellipse cx="17" cy="48" rx="8.5" ry="17" fill="#dfa45a" ${_o} transform="rotate(16 17 48)"/><ellipse cx="55" cy="48" rx="8.5" ry="17" fill="#dfa45a" ${_o} transform="rotate(-16 55 48)"/><ellipse cx="36" cy="47" rx="20" ry="19" fill="#f2cf94" ${_o}/><path d="M30 30q3 -5 6 0q3 -5 6 0" fill="#f2cf94" ${_o}/><ellipse cx="36" cy="58" rx="10" ry="8" fill="#fbe8c6" ${_o}/>${eye2(29,45)}${eye2(43,45)}<ellipse cx="36" cy="54" rx="4.4" ry="3.2" fill="#3a2a1f"/><path d="M31 60Q36 64 41 60" fill="none" ${_o}/><path d="M33 62Q33 71 36 71Q39 71 39 62Z" fill="#ef8a96" ${_o}/>${blush(24,54,3)}${blush(48,54,3)}</g>
@@ -788,7 +791,7 @@ function renderPz(){const n=pzCount(),full=cleared.includes(4),el=$('#pz');el.in
 const DECO=`<div class="deco"><svg viewBox="-12 -12 24 24" width="24" height="24"><path d="M0 -10l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z" fill="#eab44a" stroke="#3a2a1f" stroke-width="1.8" stroke-linejoin="round"/></svg><i></i><svg viewBox="-14 -14 28 28" width="26" height="26"><path d="M-8 -2H8L6 12H-6Z" fill="#da291c" stroke="#3a2a1f" stroke-width="1.8" stroke-linejoin="round"/><rect x="-6" y="-12" width="3.4" height="12" rx="1" fill="#ffc72c" stroke="#3a2a1f" stroke-width="1.3"/><rect x="-1.5" y="-14" width="3.4" height="14" rx="1" fill="#ffc72c" stroke="#3a2a1f" stroke-width="1.3"/><rect x="3" y="-11" width="3.4" height="11" rx="1" fill="#ffc72c" stroke="#3a2a1f" stroke-width="1.3"/></svg><i></i><svg viewBox="-12 -12 24 24" width="22" height="22"><path d="M0 10C-14 0-12-10-5-10C-2-10 0-7 0-5C0-7 2-10 5-10C12-10 14 0 0 10Z" fill="#ef9aa6" stroke="#3a2a1f" stroke-width="1.8" stroke-linejoin="round"/></svg><i></i><svg viewBox="-14 -14 28 28" width="26" height="26"><path d="M-8 -8H8L6 12H-6Z" fill="#fff7e6" stroke="#3a2a1f" stroke-width="1.8" stroke-linejoin="round"/><path d="M-7 2H7L6 12H-6Z" fill="#c89a6a"/><path d="M2 -8L7 -16" stroke="#3a2a1f" stroke-width="2.4" stroke-linecap="round"/></svg></div><svg class="stk a" viewBox="-20 -20 40 40"><path d="M0 -17l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="#eab44a" stroke="#3a2a1f" stroke-width="2.4" stroke-linejoin="round"/></svg><svg class="stk b" viewBox="-12 -12 24 24"><path d="M0 10C-14 0-12-10-5-10C-2-10 0-7 0-5C0-7 2-10 5-10C12-10 14 0 0 10Z" fill="#ef9aa6" stroke="#3a2a1f" stroke-width="2.2" stroke-linejoin="round"/></svg><i class="tape"></i>`;
 let leave=null,curLv=-1,cdTs=[];
 function openLevel(i){ctx();try{bgm.volume=.14}catch(e){}wipe(()=>{
-  curLv=i;const L=$('#level');L.hidden=false;L.className='';L.style.zIndex='';document.body.classList.add('lock');
+  curLv=i;const L=$('#level');L.hidden=false;L.className='';L.style.zIndex='';document.body.classList.add('lock','lvon');
   L.innerHTML=`<div class="lvbox rough"><div class="lvhead"><button class="back rough" id="lvback">‹ 地圖</button><div class="lvt" hidden><div class="lvno">第 ${i+1} 關</div><b>${LV[i].name}</b></div></div><div class="lvintro" id="lvi"><div class="li-no">第 ${i+1} 關</div><h2>${LV[i].name}</h2><div class="li-chat"><div class="li-av" style="--bg:${HOSTS[i].bg}"><svg viewBox="0 0 100 112" class="sk">${HOSTS[i].svg}</svg><b>${HOSTS[i].n}</b></div><div class="li-bub rough">${HOSTS[i].say.map((t,k)=>`<p style="--d:${(1+k*.55).toFixed(2)}s">${t}</p>`).join('')}</div></div><button class="btn red" id="lvgo">開始 ▶</button></div><div id="game"></div>${DECO}</div>`;
   L.scrollTop=0;
   $('#lvback').onclick=()=>{ctx();sfx.pop();wipe(closeLevel)};
@@ -799,7 +802,7 @@ function countdown(i){if(i===0){const L=$('#level');ctx();$('#lvi').remove();$('
   ['3','2','1','開始！'].forEach((t,k)=>cdTs.push(setTimeout(()=>{cd.innerHTML=`<b${k>2?' class="go"':''}>${t}</b>`;if(k>2)sfx.ding();else tone(660,.12,'triangle',.18)},k*700)));
   cdTs.push(setTimeout(()=>{cd.remove();$('#lvi').remove();$('.lvt',L).hidden=false;box.classList.remove('dim');leave=LV[i].run($('#game'),()=>{if(curLv===i)win(i)})||null},3*700+650))}
 function closeLevel(){try{bgm.volume=.32}catch(e){}cdTs.forEach(clearTimeout);cdTs=[];if(leave){try{leave()}catch(e){}leave=null}curLv=-1;
-  const L=$('#level');L.hidden=true;L.innerHTML='';L.className='';L.style.zIndex='';document.body.classList.remove('lock');renderMap();renderHero();refreshEnd()}
+  const L=$('#level');L.hidden=true;L.innerHTML='';L.className='';L.style.zIndex='';document.body.classList.remove('lock','lvon');renderMap();renderHero();refreshEnd()}
 function board(n,full){const shown=new Set(ORDER.slice(0,n));let h='';
   for(let k=0;k<20;k++)h+=`<i${full||shown.has(k)?' class="in"':''} style="background-position:${k%4/3*100}% ${((k/4)|0)/4*100}%"></i>`;
   return `<div class="rwb${full?' full':''}" id="rwb">${h}</div>`}
@@ -1252,8 +1255,8 @@ function lvVeg(box,done){
 }
 
 /* ---------- level 4 : 彈吉他（節奏遊戲，跟著《太聰明》彈） ---------- */
-/* 照著《太聰明》指彈版（E 大調）扒出來的旋律＋低音：count = 開始前數的「1 2 3 4」，beat = [第一拍, 一拍幾秒]，n = [毫秒, 弦 0-3, 旋律 MIDI, 低音 MIDI（有的話）] */
-const GT={"end":146.17,"count":[-3.622,-2.717,-1.811,-0.906],"beat":[1.596,0.9056],"n":[[1451,3,64,40],[1869,3,64,44],[2566,1,61,40],[2995,1,61],[3448,2,63],[3936,0,59],[4354,2,64,40],[5027,2,64,40],[5457,1,64,44],[6142,1,61,40],[6571,3,66],[7221,2,63,54],[7779,0,59,40],[9520,0,59],[11343,1,59],[13096,0,59],[13584,0,61,56],[13978,2,64,52],[14396,2,64,40],[14838,1,64],[15383,0,61,45],[15859,3,68,45],[16289,0,61,45],[16800,0,61,44],[17554,3,68,45],[17984,3,68,45],[19203,0,59],[19807,3,69],[20271,3,68],[21188,2,66],[21862,0,61],[22268,3,68,42],[22941,3,68],[23382,2,68],[23859,3,68,42],[24590,3,68],[25263,1,64],[25635,3,68,44],[26320,3,68],[26982,1,64],[27469,3,68],[28085,2,66,40],[28828,0,61],[29211,1,64,42],[30209,3,68,42],[30557,1,64,45],[30964,1,64],[31660,0,61],[32102,1,64],[32578,3,68,44],[33019,2,64,52],[33704,2,64,44],[34122,1,64,44],[34830,0,61],[35248,0,61],[35689,1,63],[36293,0,59,45],[36606,0,59,40],[37303,1,64,40],[37709,1,64,44],[38417,0,61,42],[38859,1,63,40],[39300,1,64,44],[39753,2,66,47],[40438,3,69,45],[40890,2,66,44],[41366,1,63,44],[41761,1,63,42],[42075,2,64,44],[42423,1,63],[42969,1,64,44],[43386,0,61],[44025,0,59,40],[44478,3,68,40],[44907,2,66,40],[45465,0,59,40],[45987,0,59],[46498,1,59,40],[47195,0,59,40],[47647,3,69,45],[48402,1,64,45],[48750,1,63,44],[49052,2,63,44],[49424,1,63,44],[49923,1,63,44],[50329,2,63,42],[50701,0,61,40],[51363,0,59,40],[51664,3,68,40],[52036,3,66,40],[52640,0,59,40],[53150,0,59,40],[53859,3,66,40],[54346,2,64,44],[54718,0,61,44],[55159,1,61,42],[56065,2,63,42],[56726,2,64,42],[57168,3,66,47],[58061,0,59,44],[58584,3,66,54],[58990,0,61],[59408,1,63],[59757,1,64,49],[60070,2,64],[60453,1,64,45],[60964,1,64,44],[62392,3,69,42],[62787,0,64,42],[63228,0,64],[63901,1,64,47],[64366,0,63],[64784,1,66,47],[65109,0,64,45],[65678,2,64,44],[66154,2,64,45],[67071,1,64,40],[67524,2,64,40],[68174,2,64],[68650,1,63],[69277,0,59,44],[69776,3,68,40],[70229,1,63],[70658,0,61,40],[70995,2,66],[71610,1,64,44],[72017,2,68],[72377,1,64,45],[72864,3,71],[73224,3,71,45],[74037,2,71],[74699,1,64,44],[75117,1,63,44],[75546,2,63,44],[75941,1,64,44],[76487,3,71],[78007,0,59],[78495,3,71],[78936,1,64],[79586,3,71,54],[80051,3,71],[80747,2,71,52],[81200,1,64],[81850,2,68],[82292,1,66,47],[82768,0,64],[83197,2,69,40],[83673,2,69],[84567,1,68],[86088,0,64,49],[86587,0,64,45],[87005,3,71,45],[87458,3,71],[87922,2,71],[88352,2,71,44],[89014,0,63,44],[89432,2,71],[89884,2,71],[90326,1,71,44],[90755,2,71,44],[91556,3,76],[91951,3,75],[92520,0,64],[93019,2,71],[93925,2,71,54],[94389,1,71],[95074,2,71],[95852,2,69],[96200,1,68],[96653,2,66],[97176,1,64],[98778,2,68,47],[99114,2,68],[100705,0,61],[101529,0,59,40],[102679,1,59],[104443,0,59,40],[105117,0,61,44],[106255,1,59],[106742,0,61,56],[107125,2,64,52],[107566,2,64,40],[108205,0,59,45],[108983,3,68,45],[109354,1,64,42],[109854,0,61],[110724,3,68],[111224,0,61],[111642,0,59,44],[112524,3,68,44],[112988,3,69,44],[113453,2,68],[114347,3,68],[114811,0,61],[115206,1,64,42],[116123,3,68,42],[116553,1,64,45],[116994,3,68,42],[117888,0,61],[118317,2,64],[120546,3,68],[121185,0,59,40],[121591,2,64],[121916,0,61],[123704,2,64,45],[124087,2,64],[124413,0,59,47],[124865,1,61],[125260,3,64],[125701,3,64,44],[126131,2,64,40],[126862,3,64,44],[127280,3,64,44],[128639,2,63],[129057,3,63,42],[129811,0,59,40],[130450,2,64,52],[130879,2,64,44],[131541,1,61,40],[131982,1,61],[132423,2,63],[132888,3,66],[133352,0,59,40],[134049,2,64,40],[134722,2,63],[135152,1,61,42],[135825,2,63],[136255,2,63,54],[137625,1,64],[138995,1,61],[139540,2,61,45],[139865,2,63],[140167,1,63],[140620,3,66,54],[141073,0,59],[143325,2,64,44],[143894,2,64,40]]};
+/* 照著《太聰明》指彈版（E 大調）扒出來的旋律＋低音（只取第一段副歌）：count = 開始前數的「1 2 3 4」，beat = [第一拍, 一拍幾秒]，n = [毫秒, 弦 0-3, 旋律 MIDI, 低音 MIDI（有的話）] */
+const GT={"end":16.22,"count":[-3.622,-2.717,-1.811,-0.906],"beat":[0,0.9056],"n":[[-497,0,59],[107,3,69],[571,3,68],[1488,2,66],[2162,0,61],[2568,3,68,42],[3241,3,68],[3682,2,68],[4159,3,68,42],[4890,3,68],[5563,1,64],[5935,3,68,44],[6620,3,68],[7282,1,64],[7769,3,68],[8385,2,66,40],[9128,0,61],[9511,1,64,42],[10509,3,68,42],[10857,1,64,45],[11264,1,64],[11960,0,61],[12402,1,64],[12878,3,68,44],[13319,1,64,52],[14004,1,64,44],[14422,2,64,44]]};
 /* 指彈：按一下就撥一根弦、響一個音（Karplus-Strong 撥弦），沒有背景音樂 */
 let gtWas=false;const GTB={};
 function gtNote(m){const c=ctx();if(GTB[m])return GTB[m];const sr=c.sampleRate,f=440*Math.pow(2,(m-69)/12),L=Math.floor(sr*2.4),D=sr/f-.5,Di=Math.floor(D),fr=D-Di,b=c.createBuffer(1,L,sr),y=b.getChannelData(0);
@@ -1727,8 +1730,10 @@ renderMap();renderHero();refreshEnd();
     const A=px(a),C=px(c),out=g.createImageData(W,H),hair=new Uint8Array(W*H);
     for(let y=95;y<H;y++)for(let x=0;x<W;x++){const i=(y*W+x)*4,r=A.data[i],gg=A.data[i+1],bb=A.data[i+2],al=A.data[i+3];if(al<40)continue;
       const lum=.3*r+.59*gg+.11*bb,blond=r>150&&gg>105&&bb<130&&r-bb>55,dark=lum<95&&Math.max(r,gg,bb)-Math.min(r,gg,bb)<45;if((blond||dark)&&(x<42||x>100))hair[y*W+x]=1}
-    const still=matchMedia('(prefers-reduced-motion:reduce)').matches;let blinkT=performance.now()+2500;
-    function frame(now){const t=now/1000,shut=now>blinkT&&now<blinkT+140,S=shut?C:A;if(now>blinkT+140)blinkT=now+2600+Math.random()*2600;
+    const still=matchMedia('(prefers-reduced-motion:reduce)').matches;let blinkT=performance.now()+2500,seen=true;
+    /* 看不到頭像的時候（捲走了、關卡開著、切到別的 app）就不畫 */
+    if('IntersectionObserver' in window)new IntersectionObserver(e=>{seen=e[e.length-1].isIntersecting}).observe(cv);
+    function frame(now){if(!seen||document.hidden||document.body.classList.contains('lvon')){setTimeout(()=>requestAnimationFrame(frame),400);return}const t=now/1000,shut=now>blinkT&&now<blinkT+140,S=shut?C:A;if(now>blinkT+140)blinkT=now+2600+Math.random()*2600;
       const d=out.data;d.fill(0);
       for(let y=0;y<H;y++){const k=y<95?0:Math.pow((y-95)/205,1.4),dx=still?0:Math.round(3.2*k*Math.sin(t*1.7-y*.035));
         for(let x=0;x<W;x++){const j=y*W+x;if(!hair[j]||!((x>=30&&x<42)||(x>100&&x<=121)))continue;const si=j*4;d[si]=S.data[si];d[si+1]=S.data[si+1];d[si+2]=S.data[si+2];d[si+3]=S.data[si+3]}
