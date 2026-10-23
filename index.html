@@ -1493,7 +1493,7 @@ let bdayOn=false,bdayT=null,bdayG=null;
 function bdaySong(){if(bdayOn)return;bdayOn=true;const c=ctx();bdayG=c.createGain();bdayG.gain.setValueAtTime(0,c.currentTime);bdayG.gain.linearRampToValueAtTime(1,c.currentTime+3);bdayG.connect(master);
   const B=.45,N=[[392,.75],[392,.25],[440,1],[392,1],[523,1],[494,2],[392,.75],[392,.25],[440,1],[392,1],[587,1],[523,2],[392,.75],[392,.25],[784,1],[659,1],[523,1],[494,1],[440,2],[698,.75],[698,.25],[659,1],[523,1],[587,1],[523,3]];
   const box=(f,t,v)=>[[f,v,1.4,'sine'],[f*2,v*.3,.55,'sine'],[f*3.01,v*.1,.25,'triangle']].forEach(([fr,vv,dc,ty])=>{const o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.value=fr;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vv,t+.005);g.gain.exponentialRampToValueAtTime(.0004,t+dc);o.connect(g);g.connect(bdayG);o.start(t);o.stop(t+dc+.05)});
-  (function play(){if(!bdayOn)return;let t=c.currentTime+.15;const t0=t;N.forEach(([f,d])=>{box(f,t,.085);t+=d*B});bdayT=setTimeout(play,(t-t0)*1000+1800)})()}
+  (function play(){if(!bdayOn)return;let t=c.currentTime+.15;const t0=t;N.forEach(([f,d])=>{box(f,t,.14);t+=d*B});bdayT=setTimeout(play,(t-t0)*1000+1800)})()}
 function bdayStop(){if(!bdayOn)return;bdayOn=false;clearTimeout(bdayT);try{const c=ctx();bdayG.gain.setTargetAtTime(0,c.currentTime,.25)}catch(e){}}
 let camStream=null,micStream=null,camRaf=null,faceDet=null;
 function stopCam(){bdayStop();cancelAnimationFrame(camRaf);[camStream,micStream].forEach(m=>{if(m)m.getTracks().forEach(t=>t.stop())});camStream=micStream=null}
@@ -1519,12 +1519,14 @@ async function stage(useCam){
   let hasMic=false;
   if(useCam){
     cap('正在打開相機…');
-    try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});hasMic=true}
+    try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});hasMic=true}
     catch(e){try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}})}catch(e2){camStream=null}}
     if(camStream){const v=$('#cv');v.srcObject=camStream;try{await v.play()}catch(e){}startFace()}
     else{fin.classList.remove('cam');$('#cv').style.display='none'}
   }
-  if(!hasMic&&useCam&&camStream){try{const m=await navigator.mediaDevices.getUserMedia({audio:true});camStream.addTrack(m.getAudioTracks()[0]);hasMic=true}catch(e){}}
+  /* 吹蠟燭要用麥克風：不管有沒有開相機，一開始就問（生日歌開始之前），iPhone 開了麥克風聲音才不會中途斷掉 */
+  if(!hasMic){try{micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});hasMic=true}catch(e){}}
+  fin.addEventListener('pointerdown',()=>{try{ctx()}catch(e){}});try{ctx()}catch(e){}
   /* candles */
   musicHold=true;bgmFade(0,2.2);setTimeout(()=>{if(musicHold)bgm.pause()},2400);setTimeout(bdaySong,900);
   const wrap=$('#candles'),cols=['#d4573b','#eab44a','#3f7a67','#ef9aa6','#6aa7c8'];let lit=0;
@@ -1545,9 +1547,7 @@ async function stage(useCam){
   function wishStep(){
   cap(cap.x=(camStream?'🎉 生日帽戴好了。<br>先閉上眼睛，在心裡許一個願望。':'先閉上眼睛，在心裡許一個願望。'));
   ctl('<button class="btn red" id="wished">我許好了</button>');
-  $('#wished').onclick=async()=>{sfx.ding();ctl('');
-    /* 吹蠟燭要用麥克風：沒開相機也要問；在點按的當下問、順便叫醒聲音（iPhone 要這樣才聽得到） */
-    if(!hasMic){try{micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});hasMic=true}catch(e){}}
+  $('#wished').onclick=()=>{sfx.ding();ctl('');
     try{ctx().resume()}catch(e){}$('#dimv').classList.add('on');cap('點亮二十根蠟燭…');
     const cs=$$('.candle',wrap);cs.forEach((c,i)=>setTimeout(()=>{c.classList.remove('out');lit++;tone(600+i*30,.08,'triangle',.06)},i*110));
     setTimeout(blowPhase,20*110+500)}}
@@ -1566,10 +1566,10 @@ async function stage(useCam){
       const buf=new Float32Array(an.fftSize),t0=performance.now();let last=0,floor=.01,peak=0,warned=false;
       $('#fctl').insertAdjacentHTML('afterbegin','<div class="micm"><span>🎤</span><i><b></b></i></div>');const bar=$('.micm b');
       (function t(){if(finished)return;if(c.state!=='running')c.resume().catch(()=>{});
-        an.getFloatTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];const rms=Math.sqrt(s/buf.length),now=performance.now(),thr=Math.max(.035,floor*3);peak=Math.max(peak,rms);
+        an.getFloatTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];const rms=Math.sqrt(s/buf.length),now=performance.now(),thr=Math.max(.018,Math.min(.06,floor*2.2));peak=Math.max(peak,rms);
         if(bar)bar.style.width=Math.min(100,rms/thr*70).toFixed(0)+'%';
-        if(rms>thr){if(now-last>140&&lit>0){last=now;const l=$$('.candle:not(.out)',wrap);const n=rms>thr*3?2:1;for(let i=0;i<n&&l.length;i++)out(l.splice((Math.random()*l.length)|0,1)[0])}}
-        else floor+=(rms-floor)*.03;
+        if(rms>thr){if(now-last>110&&lit>0){last=now;const l=$$('.candle:not(.out)',wrap);const n=rms>thr*4?3:rms>thr*2?2:1;for(let i=0;i<n&&l.length;i++)out(l.splice((Math.random()*l.length)|0,1)[0])}}
+        else floor+=(rms-floor)*.02;
         if(!warned&&now-t0>4000&&peak<1e-4){warned=true;cap('麥克風好像沒聲音（可能沒允許），點一點蠟燭也可以把它們熄掉。')}
         blowRaf=requestAnimationFrame(t)})()}catch(e){cap('點一點蠟燭，把它們熄掉。')}
   }
