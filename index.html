@@ -1245,22 +1245,27 @@ function lvVeg(box,done){
 }
 
 /* ---------- level 4 : 彈吉他（節奏遊戲，跟著《太聰明》彈） ---------- */
-/* 由 guitar.mp3（太聰明 Fingerstyle Cover）自動產生：count = 開始前數的「1 2 3 4」（負的 = 音樂還沒開始），beat = [第一拍, 一拍幾秒]，n = [毫秒, 弦 0-3] */
-const GT={"end":146.17,"count":[-3.622,-2.717,-1.811,-0.906],"beat":[2.501,0.9056],"n":[[2380,1],[4725,0],[7744,2],[10356,0],[12574,1],[15047,2],[17496,3],[19772,3],[22233,0],[25298,2],[28259,3],[30523,2],[32520,0],[35004,0],[37001,1],[40368,1],[43259,2],[46208,3],[48135,3],[50445,2],[53371,1],[55356,2],[58921,1],[62055,2],[64087,0],[65898,2],[69254,0],[71726,0],[73944,1],[77079,1],[80666,2],[82686,1],[85809,0],[88282,3],[90291,3],[92740,2],[94993,2],[97930,0],[101483,0],[104130,1],[106208,1],[108414,2],[110655,2],[112675,1],[114602,0],[117806,3],[121371,2],[123205,0],[125179,0],[127687,1],[130392,3],[133979,2],[137311,0],[139215,0],[141514,3],[143476,2]]};
-/* guitar.mp3 整首解碼成一段聲音：打中哪個音符，就只響錄音裡那一聲（沒有背景音樂，沒打中就沒聲音） */
-let gtWas=false,gtBuf=null,gtLoad=null,gtFail=false;
-function gtFetch(){if(!gtLoad)gtLoad=fetch('guitar.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(a=>new Promise((ok,no)=>ctx().decodeAudioData(a,ok,no))).then(b=>{gtBuf=b},()=>{gtFail=true})}
-/* 在「開始 ▶」那一下把聲音打開，iPhone 之後才肯出聲 */
-function gtPrep(){gtWas=!bgm.paused;musicHold=true;bgm.pause();ctx();gtFetch()}
+/* 照著《太聰明》指彈版（E 大調）扒出來的簡化旋律：count = 開始前數的「1 2 3 4」，beat = [第一拍, 一拍幾秒]，n = [毫秒, 弦 0-3, 音高 MIDI] */
+const GT={"end":146.17,"count":[-3.622,-2.717,-1.811,-0.906],"beat":[2.501,0.9056],"n":[[2380,1,64],[4725,0,59],[7744,0,59],[10356,2,68],[12574,3,69],[15047,3,71],[17496,2,68],[19772,2,69],[22233,1,68],[25298,2,69],[28259,3,71],[30523,1,64],[32520,3,71],[35004,3,73],[37001,2,71],[40368,1,64],[43259,0,61],[46208,0,59],[48135,2,69],[50445,0,61],[53371,0,59],[55356,1,63],[58921,0,61],[62055,1,64],[64087,0,61],[65898,1,64],[69254,1,64],[71726,0,59],[73944,0,59],[77079,1,64],[80666,3,71],[82686,1,64],[85809,1,64],[88282,3,71],[90291,3,71],[92740,1,68],[94993,3,71],[97930,3,71],[101483,2,71],[104130,2,69],[106208,3,71],[108414,3,73],[110655,2,68],[112675,0,59],[114602,0,61],[117806,1,64],[121371,0,59],[123205,0,61],[125179,1,64],[127687,1,64],[130392,2,64],[133979,1,64],[137311,0,59],[139215,0,61],[141514,3,69],[143476,3,71]]};
+/* 指彈：按一下就撥一根弦、響一個音（Karplus-Strong 撥弦），沒有背景音樂 */
+let gtWas=false;const GTB={};
+function gtNote(m){const c=ctx();if(GTB[m])return GTB[m];const sr=c.sampleRate,f=440*Math.pow(2,(m-69)/12),L=Math.floor(sr*2.4),D=sr/f-.5,Di=Math.floor(D),fr=D-Di,b=c.createBuffer(1,L,sr),y=b.getChannelData(0);
+  /* 用手指撥的：雜訊先磨圓一點，聲音比較暖 */
+  let lp=0;for(let i=0;i<=Di+1;i++){lp+=(Math.random()*2-1-lp)*.45;y[i]=lp}
+  const rho=Math.pow(.001,1/(f*2.6));let pk=0;
+  for(let i=Di+2;i<L;i++){const a=y[i-Di]*(1-fr)+y[i-Di-1]*fr,b2=y[i-Di-1]*(1-fr)+y[i-Di-2]*fr;y[i]=rho*.5*(a+b2)}
+  for(let i=0;i<L;i++)pk=Math.max(pk,Math.abs(y[i]));for(let i=0;i<L;i++)y[i]/=pk||1;return GTB[m]=b}
+function gtPluck(m,when=0){try{const c=ctx(),s=c.createBufferSource(),v=c.createGain(),t=c.currentTime+when;s.buffer=gtNote(m);v.gain.setValueAtTime(.42,t);s.connect(v);v.connect(master);s.start(t);return {s,v}}catch(e){return null}}
+function gtPrep(){gtWas=!bgm.paused;musicHold=true;bgm.pause();ctx();GT.n.forEach(n=>gtNote(n[2]))}
 function lvGuitar(box,done){
   const COL=['#d9503a','#3f9a5a','#4a8fd0','#e8ad2e'],TINT=['#f6d3c9','#cfe8d3','#d3e3f3','#f7e7bd'],INK='#3a2a1f',
     FONT="'Iansui','LXGW WenKai TC',cursive",SANS="system-ui,-apple-system,'Segoe UI',sans-serif",
     LEAD=1.8,PERF=.08,GOOD=.17,K=2.3,s1=1/(1+K),KEYS={d:0,f:1,j:2,k:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3,'1':0,'2':1,'3':2,'4':3},
-    NOTES=GT.n.map(([ms,l],i,a)=>{const g=i+1<a.length?(a[i+1][0]-ms)/1000:2;return {t:ms/1000,l,st:0,g,hd:g>=3?Math.min(g-.6,1.5):0}}),N=NOTES.length,B0=GT.beat[0],BP=GT.beat[1],touch=matchMedia('(hover:none)').matches,lt=performance.now();
+    NOTES=GT.n.map(([ms,l,m],i,a)=>{const g=i+1<a.length?(a[i+1][0]-ms)/1000:2;return {t:ms/1000,l,m,st:0,g,hd:g>=3?Math.min(g-.6,1.5):0}}),N=NOTES.length,B0=GT.beat[0],BP=GT.beat[1],touch=matchMedia('(hover:none)').matches,lt=performance.now();
   box.innerHTML=`<div class="rg"><canvas id="rgc"></canvas><div class="rg-over" id="rgo" hidden></div></div><p class="prog rg-tip" id="rgt">撥片滑到圓鈕上就點；有尾巴的要按住不放。</p>`;
   const cv=$('#rgc',box),g=cv.getContext('2d'),over=$('#rgo',box),tip=$('#rgt',box);
-  let W=0,H=0,cx=0,yS=0,yF=0,lw=0,dB=0,raf=0,dead=false,useAudio=true,t0=0,pz=0,live=[],wasMusic=false,
-    fx=[],lit=[0,0,0,0],combo=0,best=0,hits=0,perfect=0,gi=0,ci=0,spr=[],bgc=null,gsel='acoustic',mode='load',
+  let W=0,H=0,cx=0,yS=0,yF=0,lw=0,dB=0,raf=0,dead=false,t0=0,pz=0,live=[],wasMusic=false,
+    fx=[],lit=[0,0,0,0],combo=0,best=0,hits=0,perfect=0,ci=0,spr=[],bgc=null,gsel='acoustic',mode='load',
     STY={acoustic:{name:'木吉他',burst:1,hole:1,board:['#3d2616','#5a3a22'],fret:'#efe2c4',dot:'#fff6e0',oct:1}},held=[0,0,0,0],holds=0,ptrs={};
   /* 透視：d = 還要幾個 LEAD 才到圓鈕（1 = 最遠端，0 = 圓鈕，負的 = 已經過去） */
   const S=d=>d>=0?1/(1+K*d):1-K*d,Y=d=>yF+(yS-yF)*(S(d)-s1)/(1-s1),X=(l,d)=>cx+(l-1.5)*lw*S(d),el=d=>cx-2.1*lw*S(d),er=d=>cx+2.1*lw*S(d);
@@ -1345,25 +1350,20 @@ function lvGuitar(box,done){
     if(combo>=3){g.textAlign='right';g.fillStyle='#d4573b';g.font=`30px ${FONT}`;g.fillText(combo,W-14,36);g.font=`13px ${FONT}`;g.fillText('連擊',W-14,53)}}
   function clock(){return performance.now()/1000-t0}
   function start(){over.hidden=true;mode='play';
-    hush();useAudio=!!gtBuf;t0=performance.now()/1000-GT.count[0];ci=gi=0;if(!useAudio)tip.textContent='（沒有找到 guitar.mp3，先用節拍聲代替）'}
-  /* 只響這個音符那一聲（長按的就響到尾巴結束）；早按就等到音符的時間才響，晚按就從現在開始 */
-  function play(n,now){try{const c=ctx(),a=n.t-.03,late=Math.max(0,now-a),len=Math.min(n.g-.05,n.hd?n.hd+.4:.75)-late;if(len<.08)return;
-    const at=c.currentTime+Math.max(0,a-now),s=c.createBufferSource(),v=c.createGain();s.buffer=gtBuf;
-    v.gain.setValueAtTime(0,at);v.gain.linearRampToValueAtTime(1,at+.008);v.gain.setValueAtTime(1,at+len*.55);v.gain.linearRampToValueAtTime(0,at+len);
-    s.connect(v);v.connect(master);s.start(at,a+late,len+.02);const o={s,v};n.src=o;live.push(o);s.onended=()=>{live=live.filter(q=>q!==o)}}catch(e){}}
+    hush();t0=performance.now()/1000-GT.count[0];ci=0}
+  /* 打中的音符就撥它的音；早按就等到音符的時間才響 */
+  function play(n,now){const o=gtPluck(n.m,Math.max(0,n.t-now));if(!o)return;n.src=o;live.push(o);o.s.onended=()=>{live=live.filter(q=>q!==o)}}
   function fade(o){if(!o)return;try{const t=ctx().currentTime;o.v.gain.cancelScheduledValues(t);o.v.gain.setValueAtTime(o.v.gain.value,t);o.v.gain.linearRampToValueAtTime(0,t+.08);o.s.stop(t+.1)}catch(e){}}
   function hush(){live.forEach(fade);live=[]}
   function ask(t,fn){over.innerHTML=`<div class="rg-res rough"><div class="row" style="margin:0"><button class="btn red" id="rgask">${t}</button></div></div>`;over.hidden=false;
     $('#rgask',box).onclick=()=>{ctx();over.hidden=true;fn()}}
   function release(){if(!musicHold)return;musicHold=false;if(wasMusic&&!userPaused)bgm.play().catch(()=>{});wasMusic=false}
-  /* plucked-string sound (Karplus-Strong), only when guitar.mp3 is missing: otherwise you hear just the fingerpicking */
-  const PB={};function pluck(l){try{const c=ctx(),key=gsel+l;if(!PB[key]){const sr=c.sampleRate,f=[196,247,294,392][l]*STY[gsel].oct,L=Math.floor(sr*1.1),D=Math.round(sr/f),b=c.createBuffer(1,L,sr),y=b.getChannelData(0);
-      for(let i=0;i<L;i++)y[i]=i<D?Math.random()*2-1:.996*(y[i-D]+(i-D-1>=0?y[i-D-1]:0))/2;PB[key]=b}
-    const s=c.createBufferSource(),g=c.createGain();s.buffer=PB[key];g.gain.value=.16;s.connect(g);g.connect(master);s.start()}catch(e){}}
-  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play')return;if(!useAudio)pluck(l);
+  /* 沒對到音符也有聲音：每根弦一個 E 大調的音 */
+  const OPEN=[59,64,68,71];
+  function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play'){gtPluck(OPEN[l]);return}
     let b=null,bd=GOOD;for(const n of NOTES){if(n.t-now>GOOD)break;if(!n.st&&n.l===l&&Math.abs(n.t-now)<=bd){bd=Math.abs(n.t-now);b=n}}
-    if(!b)return;b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;if(useAudio)play(b,now);
-    fx.push({l,t:performance.now()/1000,ok:1,txt:pf?'PERFECT':'GOOD',c:pf?'#d4573b':'#3f7a67'});if(!useAudio)tone(392*Math.pow(2,l*3/12),.18,'triangle',.1)}
+    if(!b){gtPluck(OPEN[l]);return}b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;play(b,now);
+    fx.push({l,t:performance.now()/1000,ok:1,txt:pf?'PERFECT':'GOOD',c:pf?'#d4573b':'#3f7a67'})}
   function rel(l){const n=held[l];if(!n)return;held[l]=0;if(n.st!==3)return;const now=clock();
     if(now<n.t+n.hd-.2){n.st=4;fade(n.src);fx.push({l,t:performance.now()/1000,txt:'放太早',c:'#a08a6e'})}else{n.st=1;holds++;fx.push({l,t:performance.now()/1000,ok:1,txt:'HOLD!',c:'#d4573b'})}}
   function finish(){mode='done';const pct=Math.round(hits/N*100),pass=hits*2>=N;
@@ -1371,13 +1371,12 @@ function lvGuitar(box,done){
     if(pass){sfx.win();burstEl(cv,50);setTimeout(()=>{if(!dead){release();done()}},2400)}
     else{sfx.bad();$('#rgre',box).onclick=()=>{ctx();sfx.pop();NOTES.forEach(n=>{n.st=0;n.src=null});held=[0,0,0,0];fx=[];combo=best=hits=perfect=holds=0;start()}}}
   function frame(){if(dead)return;raf=requestAnimationFrame(frame);
-    if(mode==='load'&&(gtBuf||gtFail||performance.now()-lt>20000))start();
+    if(mode==='load')start();
     const now=mode==='load'?0:clock();
     if(mode==='play'){
       for(let l=0;l<4;l++){const n=held[l];if(n&&n.st===3){lit[l]=performance.now()/1000+.05;if(now>=n.t+n.hd){held[l]=0;n.st=1;holds++;fx.push({l,t:performance.now()/1000,ok:1,txt:'HOLD!',c:'#d4573b'})}}}
       for(const n of NOTES){if(n.st)continue;if(now-n.t>GOOD){n.st=2;combo=0;fx.push({l:n.l,t:performance.now()/1000,txt:'MISS',c:'#a08a6e'})}else break}
       while(ci<GT.count.length&&GT.count[ci]<=now){tone(ci?1200:1600,.05,'square',.05);ci++}
-      if(!useAudio){while(gi<N&&NOTES[gi].t<=now){tone(196*Math.pow(2,NOTES[gi].l*3/12),.25,'triangle',.06);gi++}}
       if(now>=GT.end)finish()}
     draw(now)}
   cv.addEventListener('pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(er){}const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,l=Math.max(0,Math.min(3,Math.floor((x-cx)/lw+2)));ptrs[e.pointerId]=l;hit(l,e.timeStamp)});
@@ -1385,7 +1384,7 @@ function lvGuitar(box,done){
   const onKey=e=>{const l=KEYS[(e.key||'').toLowerCase()];if(l==null||e.repeat||e.metaKey||e.ctrlKey)return;e.preventDefault();hit(l,e.timeStamp)},onKeyUp=e=>{const l=KEYS[(e.key||'').toLowerCase()];if(l!=null)rel(l)};
   const onVis=()=>{if(!document.hidden||mode!=='play')return;mode='wait';pz=performance.now();hush();ask('▶ 繼續',()=>{t0+=(performance.now()-pz)/1000;mode='play'})};
   wasMusic=gtWas||!bgm.paused;musicHold=true;bgm.pause();
-  addEventListener('keydown',onKey);addEventListener('keyup',onKeyUp);addEventListener('resize',fit);document.addEventListener('visibilitychange',onVis);gtFetch();fit();raf=requestAnimationFrame(frame);
+  addEventListener('keydown',onKey);addEventListener('keyup',onKeyUp);addEventListener('resize',fit);document.addEventListener('visibilitychange',onVis);fit();raf=requestAnimationFrame(frame);
   return()=>{dead=true;cancelAnimationFrame(raf);removeEventListener('keydown',onKey);removeEventListener('keyup',onKeyUp);removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);hush();release()};
 }
 
