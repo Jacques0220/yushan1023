@@ -1399,7 +1399,7 @@ function lvGuitar(box,done){
 
 /* ---------- level 5 : memory cards; the 20 collected pieces become the prize ---------- */
 function lvMemory(box,done){
-  const N=8,MC=['那年畢業','KFC 大餐','吃到笑','口罩三人組','草地上','吃麵中','lab 自拍','我們'];
+  const N=8,MC=['那年畢業','KFC 大餐','吃到笑','口罩四人組','草地上','科學營','hotel 一日遊','我們'];
   box.innerHTML='<div class="memgrid" id="mg"></div><p class="prog" id="mp" style="margin-top:10px"></p>';
   const g=$('#mg'),deck=[...Array(N).keys(),...Array(N).keys()];for(let i=deck.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[deck[i],deck[j]]=[deck[j],deck[i]]}
   let open=[],found=0,tries=0,lock=false,dead=false;
