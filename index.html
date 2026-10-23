@@ -1270,7 +1270,7 @@ function gtPrep(){gtWas=!bgm.paused;musicHold=true;bgm.pause();ctx();GT.n.forEac
 function lvGuitar(box,done){
   const COL=['#d9503a','#3f9a5a','#4a8fd0','#e8ad2e'],TINT=['#f6d3c9','#cfe8d3','#d3e3f3','#f7e7bd'],INK='#3a2a1f',
     FONT="'Iansui','LXGW WenKai TC',cursive",SANS="system-ui,-apple-system,'Segoe UI',sans-serif",
-    LEAD=1.8,PERF=.08,GOOD=.17,K=2.3,s1=1/(1+K),KEYS={d:0,f:1,j:2,k:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3,'1':0,'2':1,'3':2,'4':3},
+    LEAD=1.8,PERF=.1,GOOD=.35,K=2.3,s1=1/(1+K),KEYS={d:0,f:1,j:2,k:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3,'1':0,'2':1,'3':2,'4':3},
     NOTES=GT.n.map(([ms,l,m,bs],i,a)=>{const g=i+1<a.length?(a[i+1][0]-ms)/1000:2;return {t:ms/1000,l,m,bs,st:0,g,hd:g>=3?Math.min(g-.6,1.5):0}}),N=NOTES.length,B0=GT.beat[0],BP=GT.beat[1],touch=matchMedia('(hover:none)').matches,lt=performance.now();
   box.innerHTML=`<div class="rg"><canvas id="rgc"></canvas><div class="rg-over" id="rgo" hidden></div></div><p class="prog rg-tip" id="rgt">撥片滑到圓鈕上就點；有尾巴的要按住不放。</p>`;
   const cv=$('#rgc',box),g=cv.getContext('2d'),over=$('#rgo',box),tip=$('#rgt',box);
@@ -1361,8 +1361,8 @@ function lvGuitar(box,done){
   function clock(){return performance.now()/1000-t0}
   function start(){over.hidden=true;mode='play';
     hush();t0=performance.now()/1000-GT.count[0];ci=0}
-  /* 打中的音符就撥它的旋律音（底下有低音就一起撥）；早按就等到音符的時間才響 */
-  function play(n,now){const w=Math.max(0,n.t-now);if(n.bs){const q=gtPluck(n.bs,w,.3);if(q){live.push(q);q.s.onended=()=>{live=live.filter(z=>z!==q)}}}const o=gtPluck(n.m,w);if(!o)return;n.src=o;live.push(o);o.s.onended=()=>{live=live.filter(q=>q!==o)}}
+  /* 打中的音符就撥它的旋律音（底下有低音就一起撥），按下去馬上響 */
+  function play(n){const w=0;if(n.bs){const q=gtPluck(n.bs,w,.3);if(q){live.push(q);q.s.onended=()=>{live=live.filter(z=>z!==q)}}}const o=gtPluck(n.m,w);if(!o)return;n.src=o;live.push(o);o.s.onended=()=>{live=live.filter(q=>q!==o)}}
   function fade(o){if(!o)return;try{const t=ctx().currentTime;o.v.gain.cancelScheduledValues(t);o.v.gain.setValueAtTime(o.v.gain.value,t);o.v.gain.linearRampToValueAtTime(0,t+.08);o.s.stop(t+.1)}catch(e){}}
   function hush(){live.forEach(fade);live=[]}
   function ask(t,fn){over.innerHTML=`<div class="rg-res rough"><div class="row" style="margin:0"><button class="btn red" id="rgask">${t}</button></div></div>`;over.hidden=false;
@@ -1370,9 +1370,12 @@ function lvGuitar(box,done){
   function release(){if(!musicHold)return;musicHold=false;if(wasMusic&&!userPaused)bgm.play().catch(()=>{});wasMusic=false}
   /* 沒對到音符也有聲音：每根弦一個 E 大調的音 */
   const OPEN=[59,64,68,71];
+  /* 只是生日小遊戲：沒對到音符就彈離現在最近的那個旋律音，怎麼按都不會走音 */
+  const near=now=>{let b=null,bd=1e9;for(const n of NOTES){const d=Math.abs(n.t-now);if(d<bd){bd=d;b=n}}return b};
   function hit(l,ts){ctx();const lag=(performance.now()-ts)/1000,now=clock()-(lag>0&&lag<.25?lag:0);lit[l]=performance.now()/1000+.11;if(mode!=='play'){gtPluck(OPEN[l]);return}
-    let b=null,bd=GOOD;for(const n of NOTES){if(n.t-now>GOOD)break;if(!n.st&&n.l===l&&Math.abs(n.t-now)<=bd){bd=Math.abs(n.t-now);b=n}}
-    if(!b){gtPluck(OPEN[l]);return}b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;play(b,now);
+    /* 時間差不多就算打中，哪根弦都可以（同一根弦的優先） */
+    let b=null,bs=1e9,bd=0;for(const n of NOTES){if(n.t-now>GOOD)break;const d=Math.abs(n.t-now);if(n.st||d>GOOD)continue;const sc=d+(n.l===l?0:.06);if(sc<bs){bs=sc;bd=d;b=n}}
+    if(!b){const q=near(now);gtPluck(q?q.m:OPEN[l],0,.3);return}b.st=b.hd?3:1;if(b.hd)held[l]=b;hits++;combo++;best=Math.max(best,combo);const pf=bd<=PERF;if(pf)perfect++;play(b);
     fx.push({l,t:performance.now()/1000,ok:1,txt:pf?'PERFECT':'GOOD',c:pf?'#d4573b':'#3f7a67'})}
   function rel(l){const n=held[l];if(!n)return;held[l]=0;if(n.st!==3)return;const now=clock();
     if(now<n.t+n.hd-.2){n.st=4;fade(n.src);fx.push({l,t:performance.now()/1000,txt:'放太早',c:'#a08a6e'})}else{n.st=1;holds++;fx.push({l,t:performance.now()/1000,ok:1,txt:'HOLD!',c:'#d4573b'})}}
