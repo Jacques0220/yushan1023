@@ -615,7 +615,7 @@ function scrawl(el,seed=3){const t=el.textContent;el.textContent='';[...t].forEa
 $$('.hh>*').forEach((e,i)=>cutOut(e.tagName==='MARK'?e:e,i*11+1));$$('.hn').forEach(e=>scrawl(e,9));
 /* photos: drop photo1.jpg … photo6.jpg next to index.html; nothing shows until a file is really there */
 const PHOTOS=[['photos/kid.webp','小時候'],['photos/school.webp','一起讀獨中'],['photos/grad.webp','畢業那天'],['photos/stage.webp','台上的你'],['photos/apollo.webp','Apollo aka Gobi'],['','叔叔的豆豆雞蛋'],['photos/rocky.webp','Poppy'],
-  ['photos/c1.webp','笑到不行'],['photos/c2.webp','✌'],['photos/c3.webp','那天晚上'],['photos/c4.webp','畢業典禮'],['photos/c5.webp','幼稚園'],['photos/c6.webp','收到花的那天']];
+  ['photos/c1.webp','笑到不行'],['photos/c2.webp','✌'],['photos/c3.webp','情人節晚上'],['photos/c4.webp','畢業典禮'],['photos/c5.webp','幼稚園'],['photos/c6.webp','收到花的那天']];
 const photoOK={};
 PHOTOS.forEach(([src],k)=>{if(!src)return;const im=new Image();im.onload=()=>{photoOK[k]=src;if(typeof renderMap==='function'&&curLv===-1&&$('#mapsvg').innerHTML)try{renderMap()}catch(e){}};im.src=src});
 function pola(k,r,w){if(!photoOK[k])return null;const d=document.createElement('div');d.className='pola';d.style.setProperty('--r',r+'deg');if(w)d.style.width=w+'px';
